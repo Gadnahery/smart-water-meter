@@ -10,6 +10,8 @@ dist-ssr/
 supabase/.temp/
 supabase/.branches/
 
+.vercel
+
 .DS_Store
 Thumbs.db
 
