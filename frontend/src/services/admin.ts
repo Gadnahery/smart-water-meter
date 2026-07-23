@@ -77,7 +77,7 @@ export async function fetchRecentAlerts(limit = 5): Promise<RecentAlert[]> {
   const { data, error } = await supabase
     .from('alerts')
     .select(
-      'id, alert_type, severity, status, created_at, smart_meters(meter_serial, customers(profiles(first_name, last_name)))',
+      'id, alert_type, severity, status, created_at, smart_meters(meter_serial, customers!smart_meters_customer_id_fkey(profiles(first_name, last_name)))',
     )
     .order('created_at', { ascending: false })
     .limit(limit)
