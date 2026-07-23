@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useAuth } from '@/hooks/useAuth'
+import { supabase } from '@/lib/supabase'
 
 const loginSchema = z.object({
   email: z.email('Enter a valid email address'),
@@ -49,8 +50,21 @@ export default function Login() {
     }
 
     toast.success('Welcome back')
-    const redirectTo = (location.state as { from?: string } | null)?.from ?? '/'
-    navigate(redirectTo, { replace: true })
+
+    const requestedFrom = (location.state as { from?: string } | null)?.from
+    if (requestedFrom) {
+      navigate(requestedFrom, { replace: true })
+      return
+    }
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    const { data: profile } = user
+      ? await supabase.from('profiles').select('role').eq('auth_id', user.id).maybeSingle()
+      : { data: null }
+
+    navigate(profile?.role === 'admin' ? '/admin' : '/', { replace: true })
   }
 
   return (
