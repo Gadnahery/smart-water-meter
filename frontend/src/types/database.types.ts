@@ -93,6 +93,62 @@ export type Database = {
           },
         ]
       }
+      bills: {
+        Row: {
+          amount: number
+          billing_month: number
+          billing_year: number
+          consumption: number
+          customer_id: string
+          discount: number
+          due_date: string
+          generated_at: string
+          id: string
+          status: Database["public"]["Enums"]["bill_status"]
+          tax: number
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          billing_month: number
+          billing_year: number
+          consumption?: number
+          customer_id: string
+          discount?: number
+          due_date: string
+          generated_at?: string
+          id?: string
+          status?: Database["public"]["Enums"]["bill_status"]
+          tax?: number
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          billing_month?: number
+          billing_year?: number
+          consumption?: number
+          customer_id?: string
+          discount?: number
+          due_date?: string
+          generated_at?: string
+          id?: string
+          status?: Database["public"]["Enums"]["bill_status"]
+          tax?: number
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bills_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           account_status: Database["public"]["Enums"]["account_status"]
@@ -384,6 +440,54 @@ export type Database = {
           },
         ]
       }
+      payments: {
+        Row: {
+          amount: number
+          bill_id: string
+          customer_id: string
+          id: string
+          paid_at: string
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          payment_status: Database["public"]["Enums"]["payment_status"]
+          transaction_reference: string | null
+        }
+        Insert: {
+          amount: number
+          bill_id: string
+          customer_id: string
+          id?: string
+          paid_at?: string
+          payment_method?: Database["public"]["Enums"]["payment_method"]
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          transaction_reference?: string | null
+        }
+        Update: {
+          amount?: number
+          bill_id?: string
+          customer_id?: string
+          id?: string
+          paid_at?: string
+          payment_method?: Database["public"]["Enums"]["payment_method"]
+          payment_status?: Database["public"]["Enums"]["payment_status"]
+          transaction_reference?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "bills"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           auth_id: string
@@ -584,6 +688,7 @@ export type Database = {
         | "low_battery"
         | "valve_failure"
         | "communication_lost"
+      bill_status: "pending" | "paid" | "overdue" | "cancelled"
       log_level: "INFO" | "WARNING" | "ERROR" | "DEBUG"
       meter_status: "online" | "offline" | "maintenance" | "disabled" | "fault"
       notification_type:
@@ -593,6 +698,8 @@ export type Database = {
         | "usage"
         | "maintenance"
         | "emergency"
+      payment_method: "cash" | "bank" | "mobile_money" | "card"
+      payment_status: "pending" | "completed" | "failed" | "refunded"
       profile_role: "admin" | "customer"
       valve_command_status: "pending" | "sent" | "executed" | "failed"
       valve_command_type:
@@ -741,6 +848,7 @@ export const Constants = {
         "valve_failure",
         "communication_lost",
       ],
+      bill_status: ["pending", "paid", "overdue", "cancelled"],
       log_level: ["INFO", "WARNING", "ERROR", "DEBUG"],
       meter_status: ["online", "offline", "maintenance", "disabled", "fault"],
       notification_type: [
@@ -751,6 +859,8 @@ export const Constants = {
         "maintenance",
         "emergency",
       ],
+      payment_method: ["cash", "bank", "mobile_money", "card"],
+      payment_status: ["pending", "completed", "failed", "refunded"],
       profile_role: ["admin", "customer"],
       valve_command_status: ["pending", "sent", "executed", "failed"],
       valve_command_type: [
