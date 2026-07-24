@@ -1,8 +1,8 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Loader2 } from 'lucide-react'
+import { Loader2, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -56,8 +56,26 @@ interface MeterFormDialogProps {
 export function MeterFormDialog({ open, onOpenChange, meter }: MeterFormDialogProps) {
   const isEdit = !!meter
   const { data: customers = [] } = useCustomerOptions()
-  const { create, update } = useMeterMutations()
+  const { create, update, regenerateApiKey } = useMeterMutations()
   const submitting = create.isPending || update.isPending
+  const [apiKey, setApiKey] = useState(meter?.device_api_key ?? '')
+
+  useEffect(() => {
+    setApiKey(meter?.device_api_key ?? '')
+  }, [meter])
+
+  async function handleRegenerateKey() {
+    if (!meter) return
+    try {
+      const newKey = await regenerateApiKey.mutateAsync(meter.id)
+      setApiKey(newKey)
+      toast.success('Device API key regenerated', {
+        description: 'Update the key in the meter’s firmware config - the old key no longer works.',
+      })
+    } catch (error) {
+      toast.error('Could not regenerate key', { description: error instanceof Error ? error.message : undefined })
+    }
+  }
 
   const {
     register,
@@ -121,6 +139,30 @@ export function MeterFormDialog({ open, onOpenChange, meter }: MeterFormDialogPr
             <Input id="meter_serial" placeholder="WM-00002" {...register('meter_serial')} />
             {errors.meter_serial && <p className="text-sm text-destructive">{errors.meter_serial.message}</p>}
           </div>
+
+          {isEdit && meter && (
+            <div className="space-y-2">
+              <Label>Device API key</Label>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 truncate rounded-lg border border-border bg-secondary px-3 py-2 text-xs">
+                  {apiKey}
+                </code>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={handleRegenerateKey}
+                  disabled={regenerateApiKey.isPending}
+                  title="Regenerate key"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Used by the ESP32 firmware to authenticate as this meter. Regenerating invalidates the old key.
+              </p>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label>Assign to customer</Label>

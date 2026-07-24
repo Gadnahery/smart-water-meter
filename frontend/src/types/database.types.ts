@@ -535,6 +535,7 @@ export type Database = {
           battery_level: number | null
           created_at: string
           customer_id: string | null
+          device_api_key: string
           firmware_version: string | null
           id: string
           installation_date: string | null
@@ -550,6 +551,7 @@ export type Database = {
           battery_level?: number | null
           created_at?: string
           customer_id?: string | null
+          device_api_key?: string
           firmware_version?: string | null
           id?: string
           installation_date?: string | null
@@ -565,6 +567,7 @@ export type Database = {
           battery_level?: number | null
           created_at?: string
           customer_id?: string | null
+          device_api_key?: string
           firmware_version?: string | null
           id?: string
           installation_date?: string | null

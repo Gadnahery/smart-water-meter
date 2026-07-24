@@ -4,6 +4,7 @@ import {
   deleteMeter,
   fetchCustomerOptions,
   fetchMeters,
+  regenerateDeviceApiKey,
   updateMeter,
   type MeterFormValues,
 } from '@/services/adminMeters'
@@ -39,5 +40,10 @@ export function useMeterMutations() {
     onSuccess: invalidate,
   })
 
-  return { create, update, remove }
+  const regenerateApiKey = useMutation({
+    mutationFn: (id: string) => regenerateDeviceApiKey(id),
+    onSuccess: invalidate,
+  })
+
+  return { create, update, remove, regenerateApiKey }
 }

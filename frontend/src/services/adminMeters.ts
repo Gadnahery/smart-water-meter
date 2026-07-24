@@ -12,6 +12,7 @@ export interface MeterWithCustomer {
   wifi_signal: number | null
   last_seen: string | null
   created_at: string
+  device_api_key: string
   customer_name: string | null
   customer_number: string | null
 }
@@ -20,7 +21,7 @@ export async function fetchMeters(): Promise<MeterWithCustomer[]> {
   const { data, error } = await supabase
     .from('smart_meters')
     .select(
-      'id, meter_serial, customer_id, firmware_version, installation_date, status, battery_level, wifi_signal, last_seen, created_at, customers!smart_meters_customer_id_fkey(customer_number, profiles(first_name, last_name))',
+      'id, meter_serial, customer_id, firmware_version, installation_date, status, battery_level, wifi_signal, last_seen, created_at, device_api_key, customers!smart_meters_customer_id_fkey(customer_number, profiles(first_name, last_name))',
     )
     .order('created_at', { ascending: false })
 
@@ -43,6 +44,7 @@ export async function fetchMeters(): Promise<MeterWithCustomer[]> {
       wifi_signal: row.wifi_signal,
       last_seen: row.last_seen,
       created_at: row.created_at,
+      device_api_key: row.device_api_key,
       customer_name: customer?.profiles ? `${customer.profiles.first_name} ${customer.profiles.last_name}` : null,
       customer_number: customer?.customer_number ?? null,
     }
@@ -106,4 +108,17 @@ export async function updateMeter(id: string, values: MeterFormValues) {
 export async function deleteMeter(id: string) {
   const { error } = await supabase.from('smart_meters').delete().eq('id', id)
   if (error) throw error
+}
+
+function randomApiKey() {
+  const bytes = new Uint8Array(16)
+  crypto.getRandomValues(bytes)
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+export async function regenerateDeviceApiKey(id: string): Promise<string> {
+  const newKey = randomApiKey()
+  const { error } = await supabase.from('smart_meters').update({ device_api_key: newKey }).eq('id', id)
+  if (error) throw error
+  return newKey
 }
