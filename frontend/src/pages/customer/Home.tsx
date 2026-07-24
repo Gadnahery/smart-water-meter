@@ -12,6 +12,7 @@ import { EmptyState } from '@/components/empty/EmptyState'
 import { useAuth } from '@/hooks/useAuth'
 import { useLatestReading, useMeter } from '@/hooks/useMeter'
 import { useUsageSeries } from '@/hooks/useUsageSeries'
+import { useRealtimeInvalidate } from '@/hooks/useRealtimeInvalidate'
 import { fetchRecentNotifications } from '@/services/notifications'
 
 type Range = 'daily' | 'weekly' | 'monthly' | 'yearly'
@@ -34,6 +35,20 @@ export default function Home() {
     enabled: !!customer,
     queryFn: () => fetchRecentNotifications(customer!.id),
   })
+
+  useRealtimeInvalidate('smart_meters', [['meter', customer?.id]], meter ? `id=eq.${meter.id}` : undefined, !!meter)
+  useRealtimeInvalidate(
+    'meter_readings',
+    [['latest-reading', meter?.id]],
+    meter ? `meter_id=eq.${meter.id}` : undefined,
+    !!meter,
+  )
+  useRealtimeInvalidate(
+    'notifications',
+    [['recent-notifications', customer?.id], ['unread-notifications', customer?.id]],
+    customer ? `customer_id=eq.${customer.id}` : undefined,
+    !!customer,
+  )
 
   if (meterLoading) {
     return (

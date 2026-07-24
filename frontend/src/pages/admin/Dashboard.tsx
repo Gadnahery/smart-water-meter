@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { StatCard } from '@/components/cards/StatCard'
 import { ConsumptionOverview } from '@/components/charts/ConsumptionOverview'
 import { useAdminDashboard } from '@/hooks/useAdminDashboard'
+import { useRealtimeInvalidate } from '@/hooks/useRealtimeInvalidate'
 
 const severityTone: Record<string, 'default' | 'warning' | 'destructive'> = {
   low: 'default',
@@ -16,6 +17,10 @@ const severityTone: Record<string, 'default' | 'warning' | 'destructive'> = {
 
 export default function Dashboard() {
   const { isLoading, counts, todayConsumption, series, alerts, customers } = useAdminDashboard()
+
+  useRealtimeInvalidate('alerts', [['admin-counts'], ['admin-recent-alerts'], ['admin-active-alerts-count']])
+  useRealtimeInvalidate('smart_meters', [['admin-counts']])
+  useRealtimeInvalidate('customers', [['admin-counts'], ['admin-recent-customers']])
 
   if (isLoading || !counts) {
     return (
