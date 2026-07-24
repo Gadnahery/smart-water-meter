@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { formatDistanceToNow } from 'date-fns'
-import { BatteryMedium, Loader2, Pencil, Plus, Trash2, Wifi, WifiOff } from 'lucide-react'
+import { BatteryMedium, ChevronDown, Loader2, Pencil, Plus, Trash2, Wifi, WifiOff } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -14,10 +14,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { EmptyState } from '@/components/empty/EmptyState'
 import { MeterFormDialog } from '@/components/forms/MeterFormDialog'
 import { useMeterMutations, useMeters } from '@/hooks/useAdminMeters'
+import { useLatestValveCommands, useSendValveCommand } from '@/hooks/useValveCommands'
 import type { MeterWithCustomer } from '@/services/adminMeters'
+import type { ValveCommandType } from '@/types'
+
+const valveCommands: ValveCommandType[] = ['OPEN', 'CLOSE', 'RESET', 'RESTART', 'CALIBRATE', 'UPDATE']
 
 const statusTone: Record<string, 'secondary' | 'default' | 'destructive' | 'outline'> = {
   online: 'default',
@@ -30,10 +40,23 @@ const statusTone: Record<string, 'secondary' | 'default' | 'destructive' | 'outl
 export default function Meters() {
   const { data: meters = [], isLoading } = useMeters()
   const { remove } = useMeterMutations()
+  const { data: latestCommands = [] } = useLatestValveCommands()
+  const sendCommand = useSendValveCommand()
 
   const [formOpen, setFormOpen] = useState(false)
   const [editingMeter, setEditingMeter] = useState<MeterWithCustomer | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<MeterWithCustomer | null>(null)
+
+  async function issueCommand(meterId: string, command: ValveCommandType) {
+    try {
+      await sendCommand.mutateAsync({ meterId, command })
+      toast.success(`${command} command queued`, {
+        description: 'It will run the next time the device polls for commands.',
+      })
+    } catch (error) {
+      toast.error('Could not send command', { description: error instanceof Error ? error.message : undefined })
+    }
+  }
 
   function openCreate() {
     setEditingMeter(null)
@@ -92,6 +115,7 @@ export default function Meters() {
                 <TableHead>Battery</TableHead>
                 <TableHead>Signal</TableHead>
                 <TableHead>Last seen</TableHead>
+                <TableHead>Valve</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -136,6 +160,23 @@ export default function Meters() {
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {meter.last_seen ? formatDistanceToNow(new Date(meter.last_seen), { addSuffix: true }) : 'Never'}
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="gap-1">
+                          {latestCommands.find((c) => c.meter_id === meter.id)?.command ?? 'Send command'}
+                          <ChevronDown className="h-3 w-3" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        {valveCommands.map((cmd) => (
+                          <DropdownMenuItem key={cmd} onClick={() => issueCommand(meter.id, cmd)}>
+                            {cmd}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="icon" onClick={() => openEdit(meter)}>
