@@ -15,6 +15,7 @@ export type MaintenanceLog = Tables['maintenance_logs']['Row']
 export type SystemSettings = Tables['system_settings']['Row']
 
 export type ProfileRole = Database['public']['Enums']['profile_role']
+export type AccountStatus = Database['public']['Enums']['account_status']
 export type MeterStatus = Database['public']['Enums']['meter_status']
 export type AlertSeverity = Database['public']['Enums']['alert_severity']
 export type AlertStatus = Database['public']['Enums']['alert_status']
