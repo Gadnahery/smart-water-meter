@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Download, Droplet, Gauge, TrendingDown, TrendingUp } from 'lucide-react'
+import { Download, Droplet, FileText, Gauge, TrendingDown, TrendingUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { StatCard } from '@/components/cards/StatCard'
@@ -10,11 +10,12 @@ import { useMeter } from '@/hooks/useMeter'
 import { useUsageSeries } from '@/hooks/useUsageSeries'
 import { fetchSettings } from '@/services/adminSettings'
 import { downloadCsv } from '@/lib/csv'
+import { generateUsageReportPdf } from '@/lib/pdf'
 
 type Range = 'daily' | 'weekly' | 'monthly' | 'yearly'
 
 export default function Usage() {
-  const { customer } = useAuth()
+  const { profile, customer } = useAuth()
   const [range, setRange] = useState<Range>('daily')
 
   const { data: meter, isLoading: meterLoading } = useMeter(customer?.id)
@@ -45,6 +46,11 @@ export default function Usage() {
     )
   }
 
+  function exportPdf() {
+    if (!profile || !meter) return
+    generateUsageReportPdf(`${profile.first_name} ${profile.last_name}`, meter.meter_serial, daily)
+  }
+
   if (meterLoading || usageLoading) {
     return (
       <div className="space-y-6">
@@ -65,10 +71,16 @@ export default function Usage() {
           <h1 className="text-xl font-bold text-foreground">Water usage</h1>
           <p className="text-sm text-muted-foreground">Detailed consumption analytics for your meter</p>
         </div>
-        <Button variant="outline" size="sm" onClick={exportCsv} disabled={daily.length === 0}>
-          <Download className="h-4 w-4" />
-          Export CSV
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={exportCsv} disabled={daily.length === 0}>
+            <Download className="h-4 w-4" />
+            CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={exportPdf} disabled={daily.length === 0}>
+            <FileText className="h-4 w-4" />
+            PDF
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">

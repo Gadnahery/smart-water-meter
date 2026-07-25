@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { format } from 'date-fns'
-import { CheckCircle2, Loader2, Receipt, Wallet } from 'lucide-react'
+import { CheckCircle2, Download, Loader2, Receipt, Wallet } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -15,7 +15,9 @@ import {
 } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { EmptyState } from '@/components/empty/EmptyState'
+import { useAuth } from '@/hooks/useAuth'
 import { useBills, usePayBill, usePayments } from '@/hooks/useBills'
+import { generateInvoicePdf } from '@/lib/pdf'
 import type { Bill, PaymentMethod } from '@/types'
 
 const statusTone: Record<string, 'destructive' | 'secondary' | 'outline'> = {
@@ -33,11 +35,21 @@ const methodLabels: Record<PaymentMethod, string> = {
 }
 
 export default function Bills() {
+  const { profile, customer } = useAuth()
   const { data: bills = [], isLoading } = useBills()
   const { data: payments = [] } = usePayments()
   const payBill = usePayBill()
   const [payingBill, setPayingBill] = useState<Bill | null>(null)
   const [method, setMethod] = useState<PaymentMethod>('card')
+
+  function downloadInvoice(bill: Bill) {
+    if (!profile || !customer) return
+    generateInvoicePdf(bill, {
+      name: `${profile.first_name} ${profile.last_name}`,
+      customerNumber: customer.customer_number,
+      email: profile.email,
+    })
+  }
 
   const outstanding = useMemo(
     () => bills.filter((b) => b.status === 'pending' || b.status === 'overdue').reduce((sum, b) => sum + b.total, 0),
@@ -95,6 +107,9 @@ export default function Bills() {
                       {bill.status}
                     </Badge>
                     <p className="w-20 text-right font-semibold text-foreground">${bill.total.toFixed(2)}</p>
+                    <Button variant="ghost" size="icon" onClick={() => downloadInvoice(bill)} title="Download invoice">
+                      <Download className="h-4 w-4" />
+                    </Button>
                     {(bill.status === 'pending' || bill.status === 'overdue') && (
                       <Button size="sm" onClick={() => setPayingBill(bill)}>
                         Pay Now
