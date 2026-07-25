@@ -2,12 +2,13 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Loader2, LogOut } from 'lucide-react'
+import { Loader2, LogOut, ShieldCheck } from 'lucide-react'
 import { toast } from 'sonner'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { ThemeToggle } from '@/components/shared/ThemeToggle'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
 
@@ -19,9 +20,22 @@ const schema = z.object({
 
 type Values = z.infer<typeof schema>
 
+const passwordSchema = z
+  .object({
+    newPassword: z.string().min(8, 'Must be at least 8 characters'),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  })
+
+type PasswordValues = z.infer<typeof passwordSchema>
+
 export default function Profile() {
-  const { profile, customer, signOut } = useAuth()
+  const { profile, customer, signOut, updatePassword } = useAuth()
   const [submitting, setSubmitting] = useState(false)
+  const [changingPassword, setChangingPassword] = useState(false)
 
   const {
     register,
@@ -33,6 +47,13 @@ export default function Profile() {
       ? { firstName: profile.first_name, lastName: profile.last_name, phone: profile.phone ?? '' }
       : undefined,
   })
+
+  const {
+    register: registerPassword,
+    handleSubmit: handlePasswordSubmit,
+    reset: resetPasswordForm,
+    formState: { errors: passwordErrors },
+  } = useForm<PasswordValues>({ resolver: zodResolver(passwordSchema) })
 
   async function onSubmit(values: Values) {
     if (!profile) return
@@ -48,6 +69,19 @@ export default function Profile() {
       return
     }
     toast.success('Profile updated')
+  }
+
+  async function onPasswordSubmit(values: PasswordValues) {
+    setChangingPassword(true)
+    const { error } = await updatePassword(values.newPassword)
+    setChangingPassword(false)
+
+    if (error) {
+      toast.error('Could not update password', { description: error })
+      return
+    }
+    resetPasswordForm()
+    toast.success('Password updated')
   }
 
   return (
@@ -88,6 +122,46 @@ export default function Profile() {
               Save changes
             </Button>
           </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+            Security
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handlePasswordSubmit(onPasswordSubmit)} className="space-y-4" noValidate>
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">New password</Label>
+              <Input id="newPassword" type="password" {...registerPassword('newPassword')} />
+              {passwordErrors.newPassword && (
+                <p className="text-sm text-destructive">{passwordErrors.newPassword.message}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm new password</Label>
+              <Input id="confirmPassword" type="password" {...registerPassword('confirmPassword')} />
+              {passwordErrors.confirmPassword && (
+                <p className="text-sm text-destructive">{passwordErrors.confirmPassword.message}</p>
+              )}
+            </div>
+            <Button type="submit" disabled={changingPassword}>
+              {changingPassword && <Loader2 className="h-4 w-4 animate-spin" />}
+              Update password
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Theme</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ThemeToggle />
         </CardContent>
       </Card>
 

@@ -26,6 +26,7 @@ import AdminSettings from '@/pages/admin/Settings'
 import AdminAuditLogs from '@/pages/admin/AuditLogs'
 import NotFound from '@/pages/errors/NotFound'
 import Forbidden from '@/pages/errors/Forbidden'
+import ServerError from '@/pages/errors/ServerError'
 
 export function AppRouter() {
   return (
@@ -99,6 +100,7 @@ export function AppRouter() {
 
       <Route path="/403" element={<Forbidden />} />
       <Route path="/404" element={<NotFound />} />
+      <Route path="/500" element={<ServerError />} />
       <Route path="*" element={<Navigate to="/404" replace />} />
     </Routes>
   )
