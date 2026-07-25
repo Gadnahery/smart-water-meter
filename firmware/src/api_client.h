@@ -23,4 +23,9 @@ int getPendingCommands(ValveCommand *out, int maxCommands);
 // Acknowledge a command as executed/failed after acting on it.
 bool acknowledgeCommand(const String &commandId, const char *status);
 
+// spec section 33: send a device log line (INFO/WARNING/ERROR/DEBUG) to
+// device_logs. Best-effort - failures are logged locally only, not retried,
+// so a flaky connection can't create a log-retry storm.
+bool sendLog(const char *level, const String &message);
+
 } // namespace ApiClient

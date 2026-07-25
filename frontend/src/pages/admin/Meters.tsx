@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { formatDistanceToNow } from 'date-fns'
-import { BatteryMedium, ChevronDown, Loader2, Pencil, Plus, Trash2, Wifi, WifiOff, Wrench } from 'lucide-react'
+import { BatteryMedium, ChevronDown, Loader2, Pencil, Plus, ScrollText, Trash2, Wifi, WifiOff, Wrench } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -23,6 +23,7 @@ import {
 import { EmptyState } from '@/components/empty/EmptyState'
 import { MeterFormDialog } from '@/components/forms/MeterFormDialog'
 import { MaintenanceDialog } from '@/components/forms/MaintenanceDialog'
+import { DeviceLogsDialog } from '@/components/forms/DeviceLogsDialog'
 import { useMeterMutations, useMeters } from '@/hooks/useAdminMeters'
 import { useLatestValveCommands, useSendValveCommand } from '@/hooks/useValveCommands'
 import type { MeterWithCustomer } from '@/services/adminMeters'
@@ -48,6 +49,7 @@ export default function Meters() {
   const [editingMeter, setEditingMeter] = useState<MeterWithCustomer | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<MeterWithCustomer | null>(null)
   const [maintenanceMeter, setMaintenanceMeter] = useState<MeterWithCustomer | null>(null)
+  const [logsMeter, setLogsMeter] = useState<MeterWithCustomer | null>(null)
 
   async function issueCommand(meterId: string, command: ValveCommandType) {
     try {
@@ -181,6 +183,9 @@ export default function Meters() {
                     </DropdownMenu>
                   </TableCell>
                   <TableCell className="text-right">
+                    <Button variant="ghost" size="icon" onClick={() => setLogsMeter(meter)} title="Device logs">
+                      <ScrollText className="h-4 w-4" />
+                    </Button>
                     <Button variant="ghost" size="icon" onClick={() => setMaintenanceMeter(meter)} title="Maintenance">
                       <Wrench className="h-4 w-4" />
                     </Button>
@@ -205,6 +210,13 @@ export default function Meters() {
         onOpenChange={(open) => !open && setMaintenanceMeter(null)}
         meterId={maintenanceMeter?.id ?? null}
         meterSerial={maintenanceMeter?.meter_serial}
+      />
+
+      <DeviceLogsDialog
+        open={!!logsMeter}
+        onOpenChange={(open) => !open && setLogsMeter(null)}
+        meterId={logsMeter?.id ?? null}
+        meterSerial={logsMeter?.meter_serial}
       />
 
       <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>

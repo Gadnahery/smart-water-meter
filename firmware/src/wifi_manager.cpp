@@ -2,9 +2,11 @@
 #include <WiFi.h>
 #include "config.h"
 #include "lcd_display.h"
+#include "api_client.h"
 
 namespace {
 unsigned long lastRetryAt = 0;
+bool wasConnected = false;
 }
 
 namespace WifiManager {
@@ -24,10 +26,24 @@ void begin() {
   Serial.print("[wifi] connected, IP: ");
   Serial.println(WiFi.localIP());
   LcdDisplay::showMessage("Connected", WiFi.localIP().toString().c_str());
+  ApiClient::sendLog("INFO", "Wi-Fi connected, IP " + WiFi.localIP().toString());
+  wasConnected = true;
 }
 
 void poll() {
-  if (WiFi.status() == WL_CONNECTED) return;
+  if (WiFi.status() == WL_CONNECTED) {
+    if (!wasConnected) {
+      Serial.println("[wifi] reconnected");
+      ApiClient::sendLog("WARNING", "Wi-Fi reconnected after a drop");
+      wasConnected = true;
+    }
+    return;
+  }
+
+  if (wasConnected) {
+    Serial.println("[wifi] connection lost");
+    wasConnected = false;
+  }
 
   unsigned long now = millis();
   if (now - lastRetryAt < WIFI_RETRY_INTERVAL_MS) return;

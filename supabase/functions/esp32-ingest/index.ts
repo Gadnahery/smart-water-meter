@@ -6,7 +6,7 @@
 // then uses the service role key to write past RLS on their behalf.
 //
 // Request body: { action, meter_serial, api_key, ...payload }
-// Actions: "reading" | "heartbeat" | "get_commands" | "ack_command"
+// Actions: "reading" | "heartbeat" | "get_commands" | "ack_command" | "log"
 
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
@@ -132,6 +132,26 @@ Deno.serve(async (req) => {
       if (ackError) return json({ success: false, message: ackError.message }, 500)
 
       return json({ success: true, message: 'Command acknowledged' })
+    }
+
+    case 'log': {
+      const level = typeof payload.level === 'string' ? payload.level.toUpperCase() : 'INFO'
+      const message = payload.message
+      if (typeof message !== 'string' || !message) {
+        return json({ success: false, message: 'message is required' }, 400)
+      }
+      if (!['INFO', 'WARNING', 'ERROR', 'DEBUG'].includes(level)) {
+        return json({ success: false, message: 'level must be INFO, WARNING, ERROR, or DEBUG' }, 400)
+      }
+
+      const { error: logError } = await supabase.from('device_logs').insert({
+        meter_id: meter.id,
+        log_level: level,
+        message,
+      })
+      if (logError) return json({ success: false, message: logError.message }, 500)
+
+      return json({ success: true, message: 'Log recorded' })
     }
 
     default:

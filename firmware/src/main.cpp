@@ -105,6 +105,7 @@ void setup() {
   Utilities::logLine("Beginning cloud synchronization");
 
   Heartbeat::send();
+  ApiClient::sendLog("INFO", "Device booted, firmware " + String(Utilities::FIRMWARE_VERSION));
   lastSyncAt = millis();
 }
 
@@ -127,6 +128,7 @@ void loop() {
 
     if (!ApiClient::uploadReading(FlowSensor::getFlowRateLpm(), totalLitres, battery, rssi)) {
       Utilities::logLine("Reading upload failed - buffering for retry");
+      ApiClient::sendLog("WARNING", "Reading upload failed, buffering for retry");
       bufferReading(FlowSensor::getFlowRateLpm(), totalLitres);
     } else {
       lastSyncAt = now;

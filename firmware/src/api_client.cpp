@@ -105,4 +105,13 @@ bool acknowledgeCommand(const String &commandId, const char *status) {
   return postAction("ack_command", extra, response);
 }
 
+bool sendLog(const char *level, const String &message) {
+  JsonDocument extra;
+  extra["level"] = level;
+  extra["message"] = message;
+
+  JsonDocument response;
+  return postAction("log", extra, response);
+}
+
 } // namespace ApiClient
