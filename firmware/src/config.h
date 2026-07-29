@@ -11,14 +11,13 @@
 #define API_BASE_URL "https://ueeskinlxggnxqnymiqg.supabase.co/functions/v1/esp32-ingest"
 
 // ---------- GPIO pins ----------
-// Matches Kelvin's built hardware:
+// Matches Kelvin's built hardware - flow sensor + LCD + 2 status LEDs,
+// no relay/valve:
 //   Flow sensor -> GPIO 35 (input-only pin, see flow_sensor.cpp note)
-//   Relay       -> GPIO 4
-//   Red LED     -> GPIO 32 (on = valve closed)
-//   Blue LED    -> GPIO 33 (on = Wi-Fi connected)
+//   Red LED     -> GPIO 32 (on = Wi-Fi offline / attention needed)
+//   Blue LED    -> GPIO 33 (on = Wi-Fi connected, blinks while connecting)
 //   LCD 16x2 I2C -> SDA GPIO 21, SCL GPIO 22
 #define FLOW_SENSOR_PIN 35
-#define VALVE_RELAY_PIN 4
 #define RED_LED_PIN 32
 #define BLUE_LED_PIN 33
 #define LCD_SDA_PIN 21

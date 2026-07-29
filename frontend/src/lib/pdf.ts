@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf'
 import { format } from 'date-fns'
+import { formatCurrency, formatLitres } from '@/lib/format'
 import type { Bill } from '@/types'
 
 const BRAND_COLOR: [number, number, number] = [79, 70, 229]
@@ -51,10 +52,10 @@ export function generateInvoicePdf(
   y += 8
 
   const rows: [string, string][] = [
-    ['Consumption', `${bill.consumption} m³`],
-    ['Amount', `$${bill.amount.toFixed(2)}`],
-    ['Tax', `$${bill.tax.toFixed(2)}`],
-    ['Discount', `-$${bill.discount.toFixed(2)}`],
+    ['Consumption', formatLitres(bill.consumption)],
+    ['Amount', formatCurrency(bill.amount)],
+    ['Tax', formatCurrency(bill.tax)],
+    ['Discount', `-${formatCurrency(bill.discount)}`],
   ]
   for (const [label, value] of rows) {
     doc.text(label, 14, y)
@@ -67,7 +68,7 @@ export function generateInvoicePdf(
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(12)
   doc.text('Total', 14, y)
-  doc.text(`$${bill.total.toFixed(2)}`, 196, y, { align: 'right' })
+  doc.text(formatCurrency(bill.total), 196, y, { align: 'right' })
 
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(8)
@@ -99,7 +100,7 @@ export function generateUsageReportPdf(
   doc.text(`Generated: ${format(new Date(), 'MMM d, yyyy')}`, 14, y)
   y += 6
   const total = rows.reduce((sum, r) => sum + r.consumption, 0)
-  doc.text(`Total consumption: ${total.toFixed(1)} m³ over ${rows.length} days`, 14, y)
+  doc.text(`Total consumption: ${formatLitres(total)} over ${rows.length} days`, 14, y)
 
   y += 10
   line(doc, y)
@@ -107,7 +108,7 @@ export function generateUsageReportPdf(
 
   doc.setFont('helvetica', 'bold')
   doc.text('Date', 14, y)
-  doc.text('Consumption (m³)', 196, y, { align: 'right' })
+  doc.text('Consumption (L)', 196, y, { align: 'right' })
   doc.setFont('helvetica', 'normal')
   y += 6
   line(doc, y - 3)
@@ -118,7 +119,7 @@ export function generateUsageReportPdf(
       y = 20
     }
     doc.text(format(new Date(row.date), 'MMM d, yyyy'), 14, y)
-    doc.text(row.consumption.toFixed(1), 196, y, { align: 'right' })
+    doc.text(Math.round(row.consumption).toLocaleString(), 196, y, { align: 'right' })
     y += 6
   }
 

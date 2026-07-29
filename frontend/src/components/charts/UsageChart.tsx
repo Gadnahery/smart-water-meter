@@ -2,6 +2,7 @@ import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YA
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { UsagePoint } from '@/hooks/useUsageSeries'
+import { formatLitres } from '@/lib/format'
 
 interface UsageChartProps {
   series: Record<'daily' | 'weekly' | 'monthly' | 'yearly', UsagePoint[]>
@@ -43,7 +44,7 @@ export function UsageChart({ series, range, onRangeChange }: UsageChartProps) {
               <XAxis dataKey="label" tickLine={false} axisLine={false} fontSize={12} />
               <YAxis tickLine={false} axisLine={false} fontSize={12} width={40} />
               <Tooltip
-                formatter={(value) => [`${Number(value).toFixed(1)} m³`, 'Consumption']}
+                formatter={(value) => [formatLitres(Number(value)), 'Consumption']}
                 contentStyle={{
                   background: 'var(--color-card)',
                   border: '1px solid var(--color-border)',

@@ -95,7 +95,7 @@ export default function Settings() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="water_tariff">Water tariff (per m³)</Label>
+                <Label htmlFor="water_tariff">Water tariff (per litre)</Label>
                 <Input id="water_tariff" type="number" step="0.01" {...register('water_tariff')} />
               </div>
               <div className="space-y-2">

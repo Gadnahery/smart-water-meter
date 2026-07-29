@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { EmptyState } from '@/components/empty/EmptyState'
 import { GenerateBillDialog } from '@/components/forms/GenerateBillDialog'
 import { useAllBills, useBillMutations } from '@/hooks/useAdminBilling'
+import { formatCurrency, formatLitres } from '@/lib/format'
 import type { BillStatus } from '@/types'
 
 const statusTone: Record<BillStatus, 'outline' | 'destructive' | 'secondary'> = {
@@ -83,8 +84,8 @@ export default function Billing() {
                   <TableCell className="text-muted-foreground">
                     {format(new Date(bill.billing_year, bill.billing_month - 1), 'MMM yyyy')}
                   </TableCell>
-                  <TableCell className="text-muted-foreground">{bill.consumption} m³</TableCell>
-                  <TableCell className="font-medium text-foreground">${bill.total.toFixed(2)}</TableCell>
+                  <TableCell className="text-muted-foreground">{formatLitres(bill.consumption)}</TableCell>
+                  <TableCell className="font-medium text-foreground">{formatCurrency(bill.total)}</TableCell>
                   <TableCell className="text-muted-foreground">{format(new Date(bill.due_date), 'MMM d, yyyy')}</TableCell>
                   <TableCell>
                     <Select value={bill.status} onValueChange={(v) => changeStatus(bill.id, v as BillStatus)}>

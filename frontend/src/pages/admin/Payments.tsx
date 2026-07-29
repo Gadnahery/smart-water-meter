@@ -5,6 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { EmptyState } from '@/components/empty/EmptyState'
 import { useAllPayments } from '@/hooks/useAdminBilling'
+import { formatCurrency } from '@/lib/format'
 
 const methodLabels: Record<string, string> = {
   card: 'Card',
@@ -60,7 +61,7 @@ export default function Payments() {
                       {p.payment_status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="font-medium text-foreground">${p.amount.toFixed(2)}</TableCell>
+                  <TableCell className="font-medium text-foreground">{formatCurrency(p.amount)}</TableCell>
                   <TableCell className="text-muted-foreground">{format(new Date(p.paid_at), 'MMM d, yyyy')}</TableCell>
                 </TableRow>
               ))}

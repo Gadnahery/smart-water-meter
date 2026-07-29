@@ -104,8 +104,8 @@ export function GenerateBillDialog({ open, onOpenChange }: { open: boolean; onOp
               <Input id="billing_year" type="number" {...register('billing_year')} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="consumption">Consumption (m³)</Label>
-              <Input id="consumption" type="number" step="0.01" {...register('consumption')} />
+              <Label htmlFor="consumption">Consumption (litres)</Label>
+              <Input id="consumption" type="number" step="1" {...register('consumption')} />
               {errors.consumption && <p className="text-sm text-destructive">{errors.consumption.message}</p>}
             </div>
           </div>

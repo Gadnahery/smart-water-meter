@@ -8,7 +8,7 @@
 #include "wifi_manager.h"
 #include "api_client.h"
 #include "flow_sensor.h"
-#include "valve_controller.h"
+#include "ota_update.h"
 #include "lcd_display.h"
 #include "status_leds.h"
 #include "heartbeat.h"
@@ -55,13 +55,43 @@ unsigned long lastCommandPollAt = 0;
 unsigned long lastFlowUpdateAt = 0;
 unsigned long lastSyncAt = 0;
 
+// This hardware has no relay/valve - OPEN/CLOSE/RESET are meaningless
+// here and just get acknowledged as failed. RESTART/CALIBRATE/UPDATE are
+// device-level operations that still apply to a flow-sensor-only meter.
+const char *executeCommand(const String &command) {
+  if (command == "RESTART") {
+    Serial.println("[device] restarting by remote command...");
+    FlowSensor::persist(); // don't lose accumulated flow to the reboot
+    ApiClient::sendLog("WARNING", "Device restarting by remote command");
+    delay(200); // let the log/ack requests finish flushing before reboot
+    ESP.restart();
+    return "executed"; // unreachable, kept for clarity
+  }
+  if (command == "CALIBRATE") {
+    // Real calibration needs a known reference volume run through the
+    // meter; this just logs the request for a technician to action.
+    Serial.println("[device] calibration requested - needs a technician on site");
+    ApiClient::sendLog("INFO", "Calibration requested - needs a technician on site");
+    return "executed";
+  }
+  if (command == "UPDATE") {
+    bool ok = OtaUpdate::checkAndApply();
+    ApiClient::sendLog(ok ? "INFO" : "ERROR", ok ? "Firmware update applied" : "Firmware update check failed");
+    return ok ? "executed" : "failed";
+  }
+
+  Serial.printf("[device] command not supported on this hardware (no valve): %s\n", command.c_str());
+  ApiClient::sendLog("ERROR", "Command not supported - no valve hardware: " + command);
+  return "failed";
+}
+
 void pollAndExecuteCommands() {
   ApiClient::ValveCommand commands[4];
   int count = ApiClient::getPendingCommands(commands, 4);
 
   for (int i = 0; i < count; i++) {
     Utilities::logLine(("Executing command: " + commands[i].command).c_str());
-    const char *result = ValveController::execute(commands[i].command);
+    const char *result = executeCommand(commands[i].command);
     ApiClient::acknowledgeCommand(commands[i].id, result);
   }
 }
@@ -76,7 +106,6 @@ void setup() {
   LcdDisplay::begin();
   StatusLeds::begin();
   FlowSensor::begin();
-  ValveController::begin();
 
   WifiManager::begin(); // blocks with retries until connected (spec 42)
 
@@ -118,6 +147,8 @@ void loop() {
       lastSyncAt = now;
       flushBufferedReadings(battery, rssi);
     }
+
+    FlowSensor::persist(); // save the running total to flash on the same cadence
   }
 
   if (now - lastHeartbeatAt >= HEARTBEAT_INTERVAL_MS) {

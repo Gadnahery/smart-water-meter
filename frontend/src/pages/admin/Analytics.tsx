@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { StatCard } from '@/components/cards/StatCard'
 import { useAllBills } from '@/hooks/useAdminBilling'
+import { formatCurrency, formatLitres } from '@/lib/format'
 
 export default function Analytics() {
   const { data: bills = [], isLoading } = useAllBills()
@@ -67,9 +68,9 @@ export default function Analytics() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard label="Total revenue (paid)" value={`$${totalRevenue.toFixed(2)}`} icon={<TrendingUp className="h-5 w-5" />} tone="success" />
-        <StatCard label="Outstanding" value={`$${outstanding.toFixed(2)}`} icon={<TrendingUp className="h-5 w-5" />} tone={outstanding > 0 ? 'warning' : 'default'} />
-        <StatCard label="Avg. consumption / bill" value={`${avgConsumption.toFixed(1)} m³`} icon={<BarChart3 className="h-5 w-5" />} />
+        <StatCard label="Total revenue (paid)" value={formatCurrency(totalRevenue)} icon={<TrendingUp className="h-5 w-5" />} tone="success" />
+        <StatCard label="Outstanding" value={formatCurrency(outstanding)} icon={<TrendingUp className="h-5 w-5" />} tone={outstanding > 0 ? 'warning' : 'default'} />
+        <StatCard label="Avg. consumption / bill" value={formatLitres(avgConsumption)} icon={<BarChart3 className="h-5 w-5" />} />
       </div>
 
       <Card>
@@ -92,7 +93,7 @@ export default function Analytics() {
                 <XAxis dataKey="label" tickLine={false} axisLine={false} fontSize={12} />
                 <YAxis tickLine={false} axisLine={false} fontSize={12} width={50} />
                 <Tooltip
-                  formatter={(value) => [`$${Number(value).toFixed(2)}`, 'Revenue']}
+                  formatter={(value) => [formatCurrency(Number(value)), 'Revenue']}
                   contentStyle={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 12 }}
                 />
                 <Area type="monotone" dataKey="value" stroke="var(--color-primary)" strokeWidth={2} fill="url(#revenueFill)" />
@@ -119,7 +120,7 @@ export default function Analytics() {
                   <p className="text-sm font-medium text-foreground">{c.name}</p>
                   <p className="text-xs text-muted-foreground">{c.number}</p>
                 </div>
-                <p className="font-semibold text-foreground">{c.consumption.toFixed(1)} m³</p>
+                <p className="font-semibold text-foreground">{formatLitres(c.consumption)}</p>
               </div>
             ))
           )}

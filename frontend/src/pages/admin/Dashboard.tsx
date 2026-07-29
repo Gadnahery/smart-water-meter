@@ -7,6 +7,7 @@ import { StatCard } from '@/components/cards/StatCard'
 import { ConsumptionOverview } from '@/components/charts/ConsumptionOverview'
 import { useAdminDashboard } from '@/hooks/useAdminDashboard'
 import { useRealtimeInvalidate } from '@/hooks/useRealtimeInvalidate'
+import { formatLitres } from '@/lib/format'
 
 const severityTone: Record<string, 'default' | 'warning' | 'destructive'> = {
   low: 'default',
@@ -54,7 +55,7 @@ export default function Dashboard() {
         />
         <StatCard
           label="Today's consumption"
-          value={`${todayConsumption.toFixed(1)} m³`}
+          value={formatLitres(todayConsumption)}
           icon={<Droplets className="h-5 w-5" />}
         />
         <StatCard

@@ -11,22 +11,19 @@ namespace StatusLeds {
 void begin() {
   pinMode(RED_LED_PIN, OUTPUT);
   pinMode(BLUE_LED_PIN, OUTPUT);
-  digitalWrite(RED_LED_PIN, LOW);
+  digitalWrite(RED_LED_PIN, HIGH); // offline until Wi-Fi connects
   digitalWrite(BLUE_LED_PIN, LOW);
 }
 
 void setWifiConnected(bool connected) {
   blueState = connected;
   digitalWrite(BLUE_LED_PIN, connected ? HIGH : LOW);
+  digitalWrite(RED_LED_PIN, connected ? LOW : HIGH);
 }
 
 void toggleWifiBlink() {
   blueState = !blueState;
   digitalWrite(BLUE_LED_PIN, blueState ? HIGH : LOW);
-}
-
-void setValveClosed(bool closed) {
-  digitalWrite(RED_LED_PIN, closed ? HIGH : LOW);
 }
 
 } // namespace StatusLeds

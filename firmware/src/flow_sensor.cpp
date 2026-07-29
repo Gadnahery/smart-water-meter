@@ -1,5 +1,6 @@
 #include "flow_sensor.h"
 #include <Arduino.h>
+#include <Preferences.h>
 #include "config.h"
 
 namespace {
@@ -10,6 +11,9 @@ unsigned long lastUpdateAtMs = 0;
 
 float flowRateLpm = 0.0f;
 float totalLitres = 0.0f;
+float lastPersistedTotal = 0.0f;
+
+Preferences prefs;
 
 void IRAM_ATTR onPulse() {
   pulseCount++;
@@ -29,6 +33,11 @@ void begin() {
   pinMode(FLOW_SENSOR_PIN, INPUT);
   attachInterrupt(digitalPinToInterrupt(FLOW_SENSOR_PIN), onPulse, FALLING);
   lastUpdateAtMs = millis();
+
+  prefs.begin("flowsensor", false);
+  totalLitres = prefs.getFloat("total", 0.0f);
+  lastPersistedTotal = totalLitres;
+  Serial.printf("[flow] restored cumulative total from flash: %.2f L\n", totalLitres);
 }
 
 void update() {
@@ -57,6 +66,12 @@ float getFlowRateLpm() {
 
 float getTotalLitres() {
   return totalLitres;
+}
+
+void persist() {
+  if (totalLitres == lastPersistedTotal) return; // nothing new - skip the flash write
+  prefs.putFloat("total", totalLitres);
+  lastPersistedTotal = totalLitres;
 }
 
 } // namespace FlowSensor

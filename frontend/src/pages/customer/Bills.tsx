@@ -18,6 +18,7 @@ import { EmptyState } from '@/components/empty/EmptyState'
 import { useAuth } from '@/hooks/useAuth'
 import { useBills, usePayBill, usePayments } from '@/hooks/useBills'
 import { generateInvoicePdf } from '@/lib/pdf'
+import { formatCurrency, formatLitres } from '@/lib/format'
 import type { Bill, PaymentMethod } from '@/types'
 
 const statusTone: Record<string, 'destructive' | 'secondary' | 'outline'> = {
@@ -78,7 +79,7 @@ export default function Bills() {
           <CardTitle>Outstanding balance</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-3xl font-bold text-foreground">${outstanding.toFixed(2)}</p>
+          <p className="text-3xl font-bold text-foreground">{formatCurrency(outstanding)}</p>
           <p className="mt-1 text-xs text-muted-foreground">
             Demo billing - payments here are simulated, no real gateway is connected.
           </p>
@@ -99,14 +100,14 @@ export default function Bills() {
                       {format(new Date(bill.billing_year, bill.billing_month - 1), 'MMMM yyyy')}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {bill.consumption} m³ · Due {format(new Date(bill.due_date), 'MMM d, yyyy')}
+                      {formatLitres(bill.consumption)} · Due {format(new Date(bill.due_date), 'MMM d, yyyy')}
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
                     <Badge variant={statusTone[bill.status]} className="capitalize">
                       {bill.status}
                     </Badge>
-                    <p className="w-20 text-right font-semibold text-foreground">${bill.total.toFixed(2)}</p>
+                    <p className="text-right font-semibold text-foreground">{formatCurrency(bill.total)}</p>
                     <Button variant="ghost" size="icon" onClick={() => downloadInvoice(bill)} title="Download invoice">
                       <Download className="h-4 w-4" />
                     </Button>
@@ -137,7 +138,7 @@ export default function Bills() {
                       {format(new Date(p.paid_at), 'MMM d, yyyy, h:mm a')}
                     </p>
                   </div>
-                  <p className="font-medium text-foreground">${p.amount.toFixed(2)}</p>
+                  <p className="font-medium text-foreground">{formatCurrency(p.amount)}</p>
                 </CardContent>
               </Card>
             ))}
@@ -158,7 +159,7 @@ export default function Bills() {
             <div className="space-y-4">
               <div className="flex items-center justify-between rounded-xl border border-border p-4">
                 <span className="text-sm text-muted-foreground">Amount due</span>
-                <span className="text-lg font-bold text-foreground">${payingBill.total.toFixed(2)}</span>
+                <span className="text-lg font-bold text-foreground">{formatCurrency(payingBill.total)}</span>
               </div>
 
               <div className="space-y-2">

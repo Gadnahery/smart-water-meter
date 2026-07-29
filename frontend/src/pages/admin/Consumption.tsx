@@ -6,6 +6,7 @@ import { EmptyState } from '@/components/empty/EmptyState'
 import { useAdminDashboard } from '@/hooks/useAdminDashboard'
 import { useMeterConsumptionSummary } from '@/hooks/useAdminConsumption'
 import { ConsumptionOverview } from '@/components/charts/ConsumptionOverview'
+import { formatLitres } from '@/lib/format'
 
 export default function Consumption() {
   const { series } = useAdminDashboard()
@@ -48,8 +49,8 @@ export default function Consumption() {
                   <TableCell className="text-muted-foreground">
                     {row.customer_name} <span className="text-xs">({row.customer_number})</span>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">{row.today_consumption.toFixed(1)} m³</TableCell>
-                  <TableCell className="text-muted-foreground">{row.month_consumption.toFixed(1)} m³</TableCell>
+                  <TableCell className="text-muted-foreground">{formatLitres(row.today_consumption)}</TableCell>
+                  <TableCell className="text-muted-foreground">{formatLitres(row.month_consumption)}</TableCell>
                   <TableCell className="text-muted-foreground">
                     {row.latest_flow_rate != null ? (
                       <span className="flex items-center gap-1">

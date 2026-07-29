@@ -11,6 +11,7 @@ import { useUsageSeries } from '@/hooks/useUsageSeries'
 import { fetchSettings } from '@/services/adminSettings'
 import { downloadCsv } from '@/lib/csv'
 import { generateUsageReportPdf } from '@/lib/pdf'
+import { formatCurrency, formatLitres } from '@/lib/format'
 
 type Range = 'daily' | 'weekly' | 'monthly' | 'yearly'
 
@@ -86,22 +87,22 @@ export default function Usage() {
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatCard
           label="Avg. daily usage"
-          value={stats ? `${stats.average.toFixed(1)} m³` : '—'}
+          value={stats ? formatLitres(stats.average) : '—'}
           icon={<Droplet className="h-5 w-5" />}
         />
         <StatCard
           label="Highest day"
-          value={stats ? `${stats.highest.toFixed(1)} m³` : '—'}
+          value={stats ? formatLitres(stats.highest) : '—'}
           icon={<TrendingUp className="h-5 w-5" />}
         />
         <StatCard
           label="Lowest day"
-          value={stats ? `${stats.lowest.toFixed(1)} m³` : '—'}
+          value={stats ? formatLitres(stats.lowest) : '—'}
           icon={<TrendingDown className="h-5 w-5" />}
         />
         <StatCard
           label="Est. this month's bill"
-          value={estimatedBill != null ? `$${estimatedBill.toFixed(2)}` : '—'}
+          value={estimatedBill != null ? formatCurrency(estimatedBill) : '—'}
           icon={<Gauge className="h-5 w-5" />}
         />
       </div>

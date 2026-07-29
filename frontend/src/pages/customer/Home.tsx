@@ -14,6 +14,7 @@ import { useLatestReading, useMeter } from '@/hooks/useMeter'
 import { useUsageSeries } from '@/hooks/useUsageSeries'
 import { useRealtimeInvalidate } from '@/hooks/useRealtimeInvalidate'
 import { fetchRecentNotifications } from '@/services/notifications'
+import { formatLitres } from '@/lib/format'
 
 type Range = 'daily' | 'weekly' | 'monthly' | 'yearly'
 
@@ -81,7 +82,7 @@ export default function Home() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
           label="Current month usage"
-          value={`${(currentMonth?.total_consumption ?? 0).toFixed(1)} m³`}
+          value={formatLitres(currentMonth?.total_consumption ?? 0)}
           sub={
             change === null
               ? 'No comparison data yet'
@@ -98,7 +99,7 @@ export default function Home() {
         />
         <StatCard
           label="Latest reading"
-          value={latestReading ? `${Number(latestReading.water_usage).toFixed(1)} m³` : '—'}
+          value={latestReading ? formatLitres(Number(latestReading.water_usage)) : '—'}
           sub={
             latestReading
               ? `${formatDistanceToNow(new Date(latestReading.reading_time), { addSuffix: true })}`

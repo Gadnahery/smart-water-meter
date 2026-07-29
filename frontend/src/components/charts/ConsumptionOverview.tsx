@@ -1,6 +1,7 @@
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { SystemUsagePoint } from '@/services/admin'
+import { formatLitres } from '@/lib/format'
 
 export function ConsumptionOverview({ data }: { data: SystemUsagePoint[] }) {
   return (
@@ -26,7 +27,7 @@ export function ConsumptionOverview({ data }: { data: SystemUsagePoint[] }) {
               <XAxis dataKey="label" tickLine={false} axisLine={false} fontSize={12} />
               <YAxis tickLine={false} axisLine={false} fontSize={12} width={40} />
               <Tooltip
-                formatter={(value) => [`${Number(value).toFixed(1)} m³`, 'Consumption']}
+                formatter={(value) => [formatLitres(Number(value)), 'Consumption']}
                 contentStyle={{
                   background: 'var(--color-card)',
                   border: '1px solid var(--color-border)',
