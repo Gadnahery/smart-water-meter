@@ -1,16 +1,9 @@
 #pragma once
 
-// ---------- Wi-Fi ----------
-#define WIFI_SSID "YOUR_WIFI_SSID"
-#define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
-
-// ---------- Device identity ----------
-// meter_serial + DEVICE_API_KEY must match a smart_meters row in Supabase.
-// Get both from the admin dashboard: Smart Meters -> edit meter -> Device
-// API key (regenerate there any time; update this file to match).
-#define DEVICE_ID "ESP32-001"
-#define METER_SERIAL "WM-00001"
-#define DEVICE_API_KEY "REPLACE_WITH_DEVICE_API_KEY_FROM_ADMIN_DASHBOARD"
+// Wi-Fi credentials + device identity live in secrets.h, which is
+// gitignored so real Wi-Fi passwords and API keys never reach the
+// (public) repo. Copy secrets.example.h to secrets.h and fill it in.
+#include "secrets.h"
 
 // ---------- Backend ----------
 // Supabase Edge Function that authenticates this device and writes to the
@@ -18,8 +11,16 @@
 #define API_BASE_URL "https://ueeskinlxggnxqnymiqg.supabase.co/functions/v1/esp32-ingest"
 
 // ---------- GPIO pins ----------
-#define FLOW_SENSOR_PIN 27
-#define VALVE_RELAY_PIN 26
+// Matches Kelvin's built hardware:
+//   Flow sensor -> GPIO 35 (input-only pin, see flow_sensor.cpp note)
+//   Relay       -> GPIO 4
+//   Red LED     -> GPIO 32 (on = valve closed)
+//   Blue LED    -> GPIO 33 (on = Wi-Fi connected)
+//   LCD 16x2 I2C -> SDA GPIO 21, SCL GPIO 22
+#define FLOW_SENSOR_PIN 35
+#define VALVE_RELAY_PIN 4
+#define RED_LED_PIN 32
+#define BLUE_LED_PIN 33
 #define LCD_SDA_PIN 21
 #define LCD_SCL_PIN 22
 #define LCD_I2C_ADDRESS 0x27
@@ -36,7 +37,7 @@
 #define HEARTBEAT_INTERVAL_MS 60000UL        // spec section 49
 #define COMMAND_POLL_INTERVAL_MS 5000UL      // spec section 47: realtime commands ~5s
 #define WIFI_RETRY_INTERVAL_MS 5000UL        // spec section 42
-#define LCD_SCREEN_CYCLE_MS 4000UL           // spec section 46: alternate screens
+#define WIFI_BLINK_INTERVAL_MS 400UL         // blue LED blink rate while connecting
 
 // ---------- Offline buffering ----------
 #define MAX_BUFFERED_READINGS 1000 // spec section 52

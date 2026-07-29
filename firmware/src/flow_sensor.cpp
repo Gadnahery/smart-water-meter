@@ -20,7 +20,13 @@ void IRAM_ATTR onPulse() {
 namespace FlowSensor {
 
 void begin() {
-  pinMode(FLOW_SENSOR_PIN, INPUT_PULLUP);
+  // GPIO 34-39 (including FLOW_SENSOR_PIN=35 on Kelvin's board) are
+  // input-only on the ESP32 and have no internal pull-up/pull-down -
+  // INPUT_PULLUP would silently do nothing here. Most Hall-effect flow
+  // sensors (YF-S201 etc.) already pull their own signal line up
+  // internally; if the pulse count looks stuck at 0 or noisy, add a real
+  // 10k pull-up resistor from this pin to 3.3V.
+  pinMode(FLOW_SENSOR_PIN, INPUT);
   attachInterrupt(digitalPinToInterrupt(FLOW_SENSOR_PIN), onPulse, FALLING);
   lastUpdateAtMs = millis();
 }

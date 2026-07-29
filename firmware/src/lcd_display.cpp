@@ -1,10 +1,12 @@
 #include "lcd_display.h"
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
+#include <string.h>
 #include "config.h"
 
 namespace {
 LiquidCrystal_I2C lcd(LCD_I2C_ADDRESS, LCD_COLUMNS, LCD_ROWS);
+bool titleDrawn = false;
 
 void printLines(const char *line1, const char *line2) {
   lcd.clear();
@@ -26,30 +28,25 @@ void begin() {
 
 void showMessage(const char *line1, const char *line2) {
   printLines(line1, line2);
+  titleDrawn = false; // a boot/status message was shown; redraw the title next time
 }
 
-void showHomeScreen(bool online, float todayUsageM3) {
-  char line2[17];
-  snprintf(line2, sizeof(line2), "%.1fm3  %s", todayUsageM3, online ? "Online" : "Offline");
-  printLines("SafeWater", line2);
-}
+void showFlowRate(float flowRateLpm) {
+  if (!titleDrawn) {
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Smart Water Mtr");
+    titleDrawn = true;
+  }
 
-void showWifiScreen(const char *ipAddress, int rssi) {
   char line2[17];
-  snprintf(line2, sizeof(line2), "%s %ddBm", ipAddress, rssi);
-  printLines("Wi-Fi", line2);
-}
+  snprintf(line2, sizeof(line2), "Flow: %.1f L/min", flowRateLpm);
+  // Pad to the full row width so a shorter new value fully overwrites a
+  // longer old one - no lcd.clear() here, so the title never flickers.
+  while (strlen(line2) < LCD_COLUMNS) strcat(line2, " ");
 
-void showMeterScreen(const char *meterSerial, bool valveOpen) {
-  char line2[17];
-  snprintf(line2, sizeof(line2), "Valve: %s", valveOpen ? "Open" : "Closed");
-  printLines(meterSerial, line2);
-}
-
-void showSyncScreen(unsigned long secondsSinceLastSync) {
-  char line2[17];
-  snprintf(line2, sizeof(line2), "%lus ago", secondsSinceLastSync);
-  printLines("Last sync", line2);
+  lcd.setCursor(0, 1);
+  lcd.print(line2);
 }
 
 } // namespace LcdDisplay

@@ -10,6 +10,7 @@
 #include "flow_sensor.h"
 #include "valve_controller.h"
 #include "lcd_display.h"
+#include "status_leds.h"
 #include "heartbeat.h"
 #include "utilities.h"
 
@@ -51,11 +52,8 @@ void flushBufferedReadings(int batteryPct, int wifiSignal) {
 unsigned long lastReadingUploadAt = 0;
 unsigned long lastHeartbeatAt = 0;
 unsigned long lastCommandPollAt = 0;
-unsigned long lastLcdCycleAt = 0;
 unsigned long lastFlowUpdateAt = 0;
 unsigned long lastSyncAt = 0;
-
-int lcdScreen = 0;
 
 void pollAndExecuteCommands() {
   ApiClient::ValveCommand commands[4];
@@ -68,24 +66,6 @@ void pollAndExecuteCommands() {
   }
 }
 
-void cycleLcdScreen() {
-  switch (lcdScreen) {
-    case 0:
-      LcdDisplay::showHomeScreen(WifiManager::isConnected(), Utilities::litresToCubicMetres(FlowSensor::getTotalLitres()));
-      break;
-    case 1:
-      LcdDisplay::showWifiScreen(WiFi.localIP().toString().c_str(), WiFi.RSSI());
-      break;
-    case 2:
-      LcdDisplay::showMeterScreen(METER_SERIAL, ValveController::isOpen());
-      break;
-    case 3:
-      LcdDisplay::showSyncScreen((millis() - lastSyncAt) / 1000);
-      break;
-  }
-  lcdScreen = (lcdScreen + 1) % 4;
-}
-
 } // namespace
 
 void setup() {
@@ -94,6 +74,7 @@ void setup() {
   Serial.println("\n[boot] SafeWater firmware " + String(Utilities::FIRMWARE_VERSION));
 
   LcdDisplay::begin();
+  StatusLeds::begin();
   FlowSensor::begin();
   ValveController::begin();
 
@@ -117,6 +98,9 @@ void loop() {
   if (now - lastFlowUpdateAt >= 1000) {
     lastFlowUpdateAt = now;
     FlowSensor::update();
+    float flowRate = FlowSensor::getFlowRateLpm();
+    LcdDisplay::showFlowRate(flowRate);
+    Serial.printf("[flow] %.2f L/min (total %.2f L)\n", flowRate, FlowSensor::getTotalLitres());
   }
 
   if (now - lastReadingUploadAt >= READING_UPLOAD_INTERVAL_MS) {
@@ -144,10 +128,5 @@ void loop() {
   if (now - lastCommandPollAt >= COMMAND_POLL_INTERVAL_MS) {
     lastCommandPollAt = now;
     pollAndExecuteCommands();
-  }
-
-  if (now - lastLcdCycleAt >= LCD_SCREEN_CYCLE_MS) {
-    lastLcdCycleAt = now;
-    cycleLcdScreen();
   }
 }

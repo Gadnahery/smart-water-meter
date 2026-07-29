@@ -2,6 +2,7 @@
 #include "config.h"
 #include "ota_update.h"
 #include "api_client.h"
+#include "status_leds.h"
 
 namespace {
 bool valveOpen = false;
@@ -17,12 +18,14 @@ void begin() {
 void open() {
   digitalWrite(VALVE_RELAY_PIN, HIGH);
   valveOpen = true;
+  StatusLeds::setValveClosed(false);
   Serial.println("[valve] opened");
 }
 
 void close() {
   digitalWrite(VALVE_RELAY_PIN, LOW);
   valveOpen = false;
+  StatusLeds::setValveClosed(true);
   Serial.println("[valve] closed");
 }
 
