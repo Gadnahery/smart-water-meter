@@ -22,6 +22,9 @@ export default function Dashboard() {
   useRealtimeInvalidate('alerts', [['admin-counts'], ['admin-recent-alerts'], ['admin-active-alerts-count']])
   useRealtimeInvalidate('smart_meters', [['admin-counts']])
   useRealtimeInvalidate('customers', [['admin-counts'], ['admin-recent-customers']])
+  useRealtimeInvalidate('daily_usage', [['admin-today-consumption'], ['admin-consumption-series']])
+  useRealtimeInvalidate('monthly_usage', [['admin-consumption-series']])
+  useRealtimeInvalidate('bills', [['admin-bills']])
 
   if (isLoading || !counts) {
     return (

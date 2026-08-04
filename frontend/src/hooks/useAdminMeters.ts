@@ -10,7 +10,11 @@ import {
 } from '@/services/adminMeters'
 
 export function useMeters() {
-  return useQuery({ queryKey: ['admin-meters'], queryFn: fetchMeters })
+  // See useMeter.ts: online/offline is derived client-side from
+  // last_seen recency, so this needs a periodic refetch to notice a
+  // device going quiet even when no new DB row arrives to trigger a
+  // realtime invalidation.
+  return useQuery({ queryKey: ['admin-meters'], queryFn: fetchMeters, refetchInterval: 30_000 })
 }
 
 export function useCustomerOptions() {

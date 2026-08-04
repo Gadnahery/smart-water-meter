@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { EmptyState } from '@/components/empty/EmptyState'
 import { useAuth } from '@/hooks/useAuth'
 import { useBills, usePayBill, usePayments } from '@/hooks/useBills'
+import { useRealtimeInvalidate } from '@/hooks/useRealtimeInvalidate'
 import { generateInvoicePdf } from '@/lib/pdf'
 import { formatCurrency, formatLitres } from '@/lib/format'
 import type { Bill, PaymentMethod } from '@/types'
@@ -42,6 +43,13 @@ export default function Bills() {
   const payBill = usePayBill()
   const [payingBill, setPayingBill] = useState<Bill | null>(null)
   const [method, setMethod] = useState<PaymentMethod>('card')
+
+  useRealtimeInvalidate(
+    'bills',
+    [['bills', customer?.id]],
+    customer ? `customer_id=eq.${customer.id}` : undefined,
+    !!customer,
+  )
 
   function downloadInvoice(bill: Bill) {
     if (!profile || !customer) return

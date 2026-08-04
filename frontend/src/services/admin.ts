@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { onlineThresholdIso } from '@/lib/meterStatus'
 
 export interface AdminCounts {
   totalCustomers: number
@@ -16,16 +17,28 @@ async function countRows(table: 'customers' | 'smart_meters' | 'alerts', filter?
   return count ?? 0
 }
 
+// "Active" here means "has actually sent a reading/heartbeat recently" -
+// the smart_meters.status column is set to 'online' by the device but
+// never reverted to 'offline' on its own, so it can't be trusted for a
+// live online/offline split. See lib/meterStatus.ts.
+async function countActiveMeters() {
+  const { count, error } = await supabase
+    .from('smart_meters')
+    .select('id', { count: 'exact', head: true })
+    .gte('last_seen', onlineThresholdIso())
+  if (error) throw error
+  return count ?? 0
+}
+
 export async function fetchAdminCounts(): Promise<AdminCounts> {
-  const [totalCustomers, totalMeters, activeMeters, offlineMeters, activeAlerts] = await Promise.all([
+  const [totalCustomers, totalMeters, activeAlerts, activeMeters] = await Promise.all([
     countRows('customers'),
     countRows('smart_meters'),
-    countRows('smart_meters', ['status', 'online']),
-    countRows('smart_meters', ['status', 'offline']),
     countRows('alerts', ['status', 'active']),
+    countActiveMeters(),
   ])
 
-  return { totalCustomers, totalMeters, activeMeters, offlineMeters, activeAlerts }
+  return { totalCustomers, totalMeters, activeMeters, offlineMeters: totalMeters - activeMeters, activeAlerts }
 }
 
 export async function fetchTodayConsumption(): Promise<number> {

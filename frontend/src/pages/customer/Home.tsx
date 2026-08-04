@@ -15,6 +15,7 @@ import { useUsageSeries } from '@/hooks/useUsageSeries'
 import { useRealtimeInvalidate } from '@/hooks/useRealtimeInvalidate'
 import { fetchRecentNotifications } from '@/services/notifications'
 import { formatLitres } from '@/lib/format'
+import { isMeterOnline } from '@/lib/meterStatus'
 
 type Range = 'daily' | 'weekly' | 'monthly' | 'yearly'
 
@@ -41,6 +42,18 @@ export default function Home() {
   useRealtimeInvalidate(
     'meter_readings',
     [['latest-reading', meter?.id]],
+    meter ? `meter_id=eq.${meter.id}` : undefined,
+    !!meter,
+  )
+  useRealtimeInvalidate(
+    'daily_usage',
+    [['daily-usage', meter?.id]],
+    meter ? `meter_id=eq.${meter.id}` : undefined,
+    !!meter,
+  )
+  useRealtimeInvalidate(
+    'monthly_usage',
+    [['monthly-usage', meter?.id]],
     meter ? `meter_id=eq.${meter.id}` : undefined,
     !!meter,
   )
@@ -75,7 +88,7 @@ export default function Home() {
   }
 
   const change = percentChange(currentMonth?.total_consumption, previousMonth?.total_consumption)
-  const isOnline = meter.status === 'online'
+  const isOnline = isMeterOnline(meter.last_seen)
 
   return (
     <div className="space-y-6">

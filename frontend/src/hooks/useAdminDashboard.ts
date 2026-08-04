@@ -8,7 +8,10 @@ import {
 } from '@/services/admin'
 
 export function useAdminDashboard() {
-  const counts = useQuery({ queryKey: ['admin-counts'], queryFn: fetchAdminCounts })
+  // activeMeters/offlineMeters are derived from last_seen recency (see
+  // lib/meterStatus.ts) - refetch periodically so a device going quiet is
+  // reflected even without a new DB row to trigger a realtime refresh.
+  const counts = useQuery({ queryKey: ['admin-counts'], queryFn: fetchAdminCounts, refetchInterval: 30_000 })
   const today = useQuery({ queryKey: ['admin-today-consumption'], queryFn: fetchTodayConsumption })
   const series = useQuery({ queryKey: ['admin-consumption-series'], queryFn: () => fetchSystemConsumptionSeries(30) })
   const alerts = useQuery({ queryKey: ['admin-recent-alerts'], queryFn: () => fetchRecentAlerts(5) })

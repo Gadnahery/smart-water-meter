@@ -5,12 +5,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { EmptyState } from '@/components/empty/EmptyState'
 import { useAdminDashboard } from '@/hooks/useAdminDashboard'
 import { useMeterConsumptionSummary } from '@/hooks/useAdminConsumption'
+import { useRealtimeInvalidate } from '@/hooks/useRealtimeInvalidate'
 import { ConsumptionOverview } from '@/components/charts/ConsumptionOverview'
 import { formatLitres } from '@/lib/format'
 
 export default function Consumption() {
   const { series } = useAdminDashboard()
   const { data: rows = [], isLoading } = useMeterConsumptionSummary()
+
+  useRealtimeInvalidate('daily_usage', [['admin-consumption-series'], ['admin-today-consumption']])
+  useRealtimeInvalidate('monthly_usage', [['admin-consumption-series']])
 
   return (
     <div className="space-y-6">

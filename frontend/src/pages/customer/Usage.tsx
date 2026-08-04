@@ -8,6 +8,7 @@ import { UsageChart } from '@/components/charts/UsageChart'
 import { useAuth } from '@/hooks/useAuth'
 import { useMeter } from '@/hooks/useMeter'
 import { useUsageSeries } from '@/hooks/useUsageSeries'
+import { useRealtimeInvalidate } from '@/hooks/useRealtimeInvalidate'
 import { fetchSettings } from '@/services/adminSettings'
 import { downloadCsv } from '@/lib/csv'
 import { generateUsageReportPdf } from '@/lib/pdf'
@@ -22,6 +23,19 @@ export default function Usage() {
   const { data: meter, isLoading: meterLoading } = useMeter(customer?.id)
   const { series, daily, currentMonth, previousMonth, isLoading: usageLoading } = useUsageSeries(meter?.id)
   const { data: settings } = useQuery({ queryKey: ['public-settings'], queryFn: fetchSettings })
+
+  useRealtimeInvalidate(
+    'daily_usage',
+    [['daily-usage', meter?.id]],
+    meter ? `meter_id=eq.${meter.id}` : undefined,
+    !!meter,
+  )
+  useRealtimeInvalidate(
+    'monthly_usage',
+    [['monthly-usage', meter?.id]],
+    meter ? `meter_id=eq.${meter.id}` : undefined,
+    !!meter,
+  )
 
   const stats = useMemo(() => {
     if (daily.length === 0) return null

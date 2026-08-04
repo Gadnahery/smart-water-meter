@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { EmptyState } from '@/components/empty/EmptyState'
 import { GenerateBillDialog } from '@/components/forms/GenerateBillDialog'
 import { useAllBills, useBillMutations } from '@/hooks/useAdminBilling'
+import { useRealtimeInvalidate } from '@/hooks/useRealtimeInvalidate'
 import { formatCurrency, formatLitres } from '@/lib/format'
 import type { BillStatus } from '@/types'
 
@@ -26,6 +27,8 @@ export default function Billing() {
   const { data: bills = [], isLoading } = useAllBills()
   const { setStatus } = useBillMutations()
   const [generateOpen, setGenerateOpen] = useState(false)
+
+  useRealtimeInvalidate('bills', [['admin-bills']])
 
   async function changeStatus(id: string, status: BillStatus) {
     try {
