@@ -5,5 +5,16 @@ export function formatCurrency(amount: number): string {
 
 /** Litre volume, e.g. formatLitres(1234.5) -> "1,235 L" */
 export function formatLitres(litres: number): string {
-  return `${Math.round(litres).toLocaleString()} L`
+  const safe = Number.isFinite(litres) ? litres : 0
+
+  if (Math.abs(safe) < 10) {
+    return `${safe.toFixed(1).replace(/\.0$/, '').toLocaleString()} L`
+  }
+
+  if (Math.abs(safe) >= 1000) {
+    const inKiloLitres = safe / 1000
+    return `${inKiloLitres.toFixed(1).replace(/\.0$/, '').toLocaleString()} kL`
+  }
+
+  return `${Math.round(safe).toLocaleString()} L`
 }

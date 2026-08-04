@@ -82,6 +82,7 @@ void setup() {
   LcdDisplay::begin();
   StatusLeds::begin();
   FlowSensor::begin();
+  lastUploadedTotalLitres = 0.0f;
 
   WifiManager::begin();
   configTime(0, 0, "pool.ntp.org", "time.nist.gov");
