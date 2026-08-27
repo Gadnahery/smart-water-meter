@@ -41,47 +41,39 @@ export default function Home() {
   useRealtimeInvalidate('water_sessions', [['active-session', customer?.id]])
 
   const isOnline = isMeterOnline(meter?.last_seen)
-  const flowRate = latestReading?.flow_rate != null ? Number(latestReading.flow_rate) : null
-  const isFlowing = activeSession != null || (flowRate != null && flowRate > 0)
+  const flowRate = (isOnline && latestReading?.flow_rate != null) ? Number(latestReading.flow_rate) : null
+  const isFlowing = isOnline && (activeSession != null || (flowRate != null && flowRate > 0))
 
-  // Usage calculations
+  // Real Usage calculations from database
   const todayUsage = useMemo(() => {
     if (daily.length > 0) {
       return Number(daily[daily.length - 1].consumption) || 0
     }
-    return 142
+    return 0
   }, [daily])
 
   const weekUsage = useMemo(() => {
     if (daily.length > 0) {
       return daily.slice(-7).reduce((acc, curr) => acc + Number(curr.consumption || 0), 0)
     }
-    return 1250
+    return 0
   }, [daily])
 
-  const monthUsage = currentMonth?.total_consumption ?? 4850
+  const monthUsage = currentMonth?.total_consumption ?? 0
 
   const trendPct = useMemo(() => {
     if (currentMonth && previousMonth && previousMonth.total_consumption > 0) {
       return Math.round(((currentMonth.total_consumption - previousMonth.total_consumption) / previousMonth.total_consumption) * 100)
     }
-    return -8
+    return 0
   }, [currentMonth, previousMonth])
 
-  // Sparkline data for consumption card
+  // Sparkline data for consumption card (real readings)
   const consumptionChartData = useMemo(() => {
     if (daily.length >= 7) {
       return daily.slice(-7).map((d) => ({ val: Number(d.consumption || 0) }))
     }
-    return [
-      { val: 120 },
-      { val: 145 },
-      { val: 110 },
-      { val: 160 },
-      { val: 135 },
-      { val: 125 },
-      { val: 140 },
-    ]
+    return daily.map((d) => ({ val: Number(d.consumption || 0) }))
   }, [daily])
 
   // Mini bar chart data for consumption details card
@@ -92,18 +84,13 @@ export default function Home() {
         val: Number(d.consumption || 0),
       }))
     }
-    return [
-      { day: 'Mon', val: 140 },
-      { day: 'Tue', val: 185 },
-      { day: 'Wed', val: 120 },
-      { day: 'Thu', val: 220 },
-      { day: 'Fri', val: 175 },
-      { day: 'Sat', val: 195 },
-      { day: 'Sun', val: todayUsage },
-    ]
-  }, [daily, todayUsage])
+    return daily.map((d) => ({
+      day: format(new Date(d.date), 'EEE'),
+      val: Number(d.consumption || 0),
+    }))
+  }, [daily])
 
-  // Recent activity stream
+  // Real Recent activity stream
   const recentActivityEvents: ActivityEvent[] = useMemo(() => {
     const events: ActivityEvent[] = []
 
@@ -111,7 +98,7 @@ export default function Home() {
       events.push({
         id: `sess-act-${activeSession.id}`,
         title: 'Water session started',
-        description: `Consuming at ${flowRate ?? 8.4} L/min`,
+        description: `Consuming at ${flowRate ?? 0} L/min`,
         timestamp: activeSession.started_at,
         type: 'session_started',
         badge: 'Flowing',
@@ -128,8 +115,8 @@ export default function Home() {
       })
     }
 
-    // Add completed tokens
-    tokens.slice(0, 2).forEach((t) => {
+    // Add real completed tokens
+    tokens.slice(0, 3).forEach((t) => {
       if (t.status === 'completed' && t.completed_at) {
         events.push({
           id: `tok-comp-${t.id}`,
@@ -140,25 +127,6 @@ export default function Home() {
         })
       }
     })
-
-    if (events.length === 0) {
-      events.push(
-        {
-          id: 'def-1',
-          title: 'Water session completed',
-          description: '5,000 L consumed. Valve closed safely.',
-          timestamp: new Date(Date.now() - 3600000).toISOString(),
-          type: 'session_completed',
-        },
-        {
-          id: 'def-2',
-          title: '500 L consumed',
-          description: 'Flow velocity 8.4 L/min recorded.',
-          timestamp: new Date(Date.now() - 7200000).toISOString(),
-          type: 'consumed',
-        },
-      )
-    }
 
     return events
   }, [activeSession, activeToken, tokens, flowRate])
@@ -177,10 +145,10 @@ export default function Home() {
     )
   }
 
-  const customerName = profile?.first_name ? `${profile.first_name}` : 'Gadna'
-  const customerAddress = customer?.customer_number
-    ? `Customer ${customer.customer_number} · Dar es Salaam`
-    : '1234 Example Street · Dar es Salaam'
+  const customerName = profile?.first_name ? `${profile.first_name}` : 'Customer'
+  const customerAddress = customer?.address
+    ? `${customer.address} · Acc #${customer.customer_number}`
+    : `Account #${customer?.customer_number ?? 'Unassigned'}`
 
   return (
     <div className="space-y-5 pb-8">
@@ -208,15 +176,15 @@ export default function Home() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         <WaterSafetyCard
           status={isFlowing ? 'monitoring' : 'no_leak'}
-          lastUpdated="Just now"
+          lastUpdated={meter?.last_seen ? 'Telemetry active' : 'No recent signal'}
           currentFlow={flowRate ?? undefined}
         />
         <MeterStatusCard
           status={isOnline ? 'online' : 'offline'}
-          meterSerial={meter?.meter_serial ?? 'SWM-000124'}
-          wifiSignal={meter?.wifi_signal}
-          batteryLevel={meter?.battery_level}
-          lastSeenText="Active now"
+          meterSerial={meter?.meter_serial ?? 'None'}
+          wifiSignal={isOnline ? meter?.wifi_signal : null}
+          batteryLevel={isOnline ? meter?.battery_level : null}
+          lastSeenText={meter?.last_seen ? 'Active recently' : 'Never connected'}
         />
       </div>
 
@@ -235,7 +203,7 @@ export default function Home() {
       <ConsumptionCard
         totalLitres={weekUsage}
         trendPct={trendPct}
-        statusText="Within normal range"
+        statusText={weekUsage > 0 ? 'Recorded usage' : 'No recorded usage'}
         chartData={consumptionChartData}
         periodLabel="this week"
       />
@@ -259,7 +227,7 @@ export default function Home() {
             View all
           </button>
         </div>
-        <ActivityTimeline events={recentActivityEvents.slice(0, 3)} />
+        <ActivityTimeline events={recentActivityEvents} />
       </div>
 
       {/* Dialogs */}
@@ -267,6 +235,7 @@ export default function Home() {
         open={getWaterOpen}
         onOpenChange={setGetWaterOpen}
         meterId={meter?.id}
+        meterSerial={meter?.meter_serial}
         onActivated={() => navigate('/water')}
       />
       <ActivateTokenDialog

@@ -40,14 +40,14 @@ export default function Billing() {
 
   useRealtimeInvalidate('bills', [['admin-bills']])
 
-  // Section 42 Metrics: bills generated, paid, unpaid, overdue, revenue, taxes
+  // Real Metrics: bills generated, paid, unpaid, overdue, revenue, taxes
   const metrics = useMemo(() => {
-    const totalBills = bills.length > 0 ? bills.length : 142
-    const paidBills = bills.filter((b) => b.status === 'paid').length || 98
-    const unpaidBills = bills.filter((b) => b.status === 'pending').length || 36
-    const overdueBills = bills.filter((b) => b.status === 'overdue').length || 8
-    const revenue = bills.filter((b) => b.status === 'paid').reduce((sum, b) => sum + b.total, 0) || 12850000
-    const taxes = bills.reduce((sum, b) => sum + (b.tax || 0), 0) || 642500
+    const totalBills = bills.length
+    const paidBills = bills.filter((b) => b.status === 'paid').length
+    const unpaidBills = bills.filter((b) => b.status === 'pending').length
+    const overdueBills = bills.filter((b) => b.status === 'overdue').length
+    const revenue = bills.filter((b) => b.status === 'paid').reduce((sum, b) => sum + b.total, 0)
+    const taxes = bills.reduce((sum, b) => sum + (b.tax || 0), 0)
 
     return {
       totalBills,

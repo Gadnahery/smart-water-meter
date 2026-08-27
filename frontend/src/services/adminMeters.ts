@@ -15,13 +15,15 @@ export interface MeterWithCustomer {
   device_api_key: string
   customer_name: string | null
   customer_number: string | null
+  latest_flow_rate: number | null
+  latest_water_usage: number | null
 }
 
 export async function fetchMeters(): Promise<MeterWithCustomer[]> {
   const { data, error } = await supabase
     .from('smart_meters')
     .select(
-      'id, meter_serial, customer_id, firmware_version, installation_date, status, battery_level, wifi_signal, last_seen, created_at, device_api_key, customers!smart_meters_customer_id_fkey(customer_number, profiles(first_name, last_name))',
+      'id, meter_serial, customer_id, firmware_version, installation_date, status, battery_level, wifi_signal, last_seen, created_at, device_api_key, customers!smart_meters_customer_id_fkey(customer_number, profiles(first_name, last_name)), meter_readings(flow_rate, water_usage, reading_time)',
     )
     .order('created_at', { ascending: false })
 
@@ -32,6 +34,17 @@ export async function fetchMeters(): Promise<MeterWithCustomer[]> {
       customer_number: string
       profiles: { first_name: string; last_name: string } | null
     } | null
+
+    const readings = (row.meter_readings as unknown as {
+      flow_rate: number | null
+      water_usage: number | null
+      reading_time: string
+    }[]) ?? []
+
+    // Sort to get latest reading
+    const latestReading = readings.length > 0
+      ? readings.sort((a, b) => new Date(b.reading_time).getTime() - new Date(a.reading_time).getTime())[0]
+      : null
 
     return {
       id: row.id,
@@ -47,6 +60,8 @@ export async function fetchMeters(): Promise<MeterWithCustomer[]> {
       device_api_key: row.device_api_key,
       customer_name: customer?.profiles ? `${customer.profiles.first_name} ${customer.profiles.last_name}` : null,
       customer_number: customer?.customer_number ?? null,
+      latest_flow_rate: latestReading?.flow_rate != null ? Number(latestReading.flow_rate) : null,
+      latest_water_usage: latestReading?.water_usage != null ? Number(latestReading.water_usage) : null,
     }
   })
 }

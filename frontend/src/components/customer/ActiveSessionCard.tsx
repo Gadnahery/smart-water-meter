@@ -22,13 +22,13 @@ interface ActiveSessionCardProps {
 
 export function ActiveSessionCard({
   token,
-  flowRate = 8.4,
+  flowRate = 0,
   meterSerial = 'SWM-000124',
   onStopSession,
   isStopping = false,
   className,
 }: ActiveSessionCardProps) {
-  const currentFlow = flowRate != null && flowRate > 0 ? flowRate : 8.4
+  const currentFlow = flowRate != null ? flowRate : 0
   const remaining = token.remaining_litres
   const allocated = token.allocated_litres
   const used = token.consumed_litres

@@ -41,7 +41,7 @@ export default function Water() {
   useRealtimeInvalidate('meter_readings', [['latest-reading', meter?.id]])
 
   const isOnline = isMeterOnline(meter?.last_seen)
-  const flowRate = latestReading?.flow_rate != null ? Number(latestReading.flow_rate) : 8.4
+  const flowRate = isOnline && latestReading?.flow_rate != null ? Number(latestReading.flow_rate) : 0
 
   async function handleEmergencyStop() {
     if (!activeSession && !activeToken) return

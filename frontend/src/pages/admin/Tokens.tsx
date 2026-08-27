@@ -64,12 +64,12 @@ export default function AdminTokens() {
     const litresAllocated = tokens.reduce((sum, t) => sum + (t.allocated_litres || 0), 0)
 
     return {
-      issuedToday: issuedToday > 0 ? issuedToday : 14,
-      active: active > 0 ? active : 12,
-      completed: completed > 0 ? completed : 284,
-      expired: expired > 0 ? expired : 6,
-      revenue: revenue > 0 ? revenue : 42500000,
-      litresAllocated: litresAllocated > 0 ? litresAllocated : 1850000,
+      issuedToday,
+      active,
+      completed,
+      expired,
+      revenue,
+      litresAllocated,
     }
   }, [tokens])
 

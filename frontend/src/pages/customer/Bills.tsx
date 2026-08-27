@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { format } from 'date-fns'
-import { CheckCircle2, Download, Loader2, Wallet } from 'lucide-react'
+import { CheckCircle2, Download, Loader2, Receipt, Wallet } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -40,30 +40,12 @@ export default function Bills() {
   useRealtimeInvalidate('bills', [['bills', customer?.id]], customer ? `customer_id=eq.${customer.id}` : undefined, !!customer)
 
   const outstanding = useMemo(() => {
-    const sum = bills.filter((b) => b.status === 'pending' || b.status === 'overdue').reduce((acc, b) => acc + b.total, 0)
-    return sum > 0 ? sum : 125400
+    return bills.filter((b) => b.status === 'pending' || b.status === 'overdue').reduce((acc, b) => acc + b.total, 0)
   }, [bills])
 
-  const pendingBill = useMemo<Bill>(() => {
-    const found = bills.find((b) => b.status === 'pending' || b.status === 'overdue')
-    if (found) return found
-
-    return {
-      id: 'demo-bill-aug',
-      customer_id: customer?.id ?? 'cus-1',
-      billing_month: 8,
-      billing_year: 2026,
-      consumption: 1254,
-      amount: 125400,
-      discount: 0,
-      tax: 6270,
-      total: 131670,
-      status: 'pending',
-      due_date: '2026-09-15T00:00:00Z',
-      generated_at: '2026-08-27T00:00:00Z',
-      updated_at: '2026-08-27T00:00:00Z',
-    }
-  }, [bills, customer])
+  const pendingBill = useMemo<Bill | null>(() => {
+    return bills.find((b) => b.status === 'pending' || b.status === 'overdue') ?? null
+  }, [bills])
 
   function downloadInvoice(bill: Bill) {
     if (!profile || !customer) return
@@ -98,7 +80,7 @@ export default function Bills() {
         </p>
       </div>
 
-      {/* 1. Top Card: Current Balance (Section 28) */}
+      {/* 1. Top Card: Current Balance */}
       <Card className="rounded-[28px] border border-border/80 bg-card p-6 sm:p-7 card-soft-shadow">
         <CardContent className="p-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
@@ -108,24 +90,26 @@ export default function Bills() {
             <div className="text-3xl sm:text-4xl font-black text-foreground tracking-tight">
               {formatCurrency(outstanding)}
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 font-semibold">
-              <span className="h-2 w-2 rounded-full bg-amber-500" />
-              <span>Outstanding balance</span>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
+              <span className={`h-2 w-2 rounded-full ${outstanding > 0 ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+              <span>{outstanding > 0 ? 'Outstanding balance' : 'Account is fully paid'}</span>
             </div>
           </div>
 
-          <Button
-            onClick={() => setPayingBill(pendingBill)}
-            className="h-12 px-6 rounded-2xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-sm shadow-md shadow-sky-600/25 self-start sm:self-auto"
-          >
-            <Wallet className="h-4 w-4 mr-2" />
-            Pay Bill
-          </Button>
+          {pendingBill && (
+            <Button
+              onClick={() => setPayingBill(pendingBill)}
+              className="h-12 px-6 rounded-2xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-sm shadow-md shadow-sky-600/25 self-start sm:self-auto"
+            >
+              <Wallet className="h-4 w-4 mr-2" />
+              Pay Bill
+            </Button>
+          )}
         </CardContent>
       </Card>
 
-      {/* 2. Monthly Bill Breakdown Card (Section 28: August 2026) */}
-      {pendingBill && (
+      {/* 2. Monthly Bill Breakdown Card */}
+      {pendingBill ? (
         <Card className="rounded-[28px] border border-border/80 bg-card p-6 sm:p-7 card-soft-shadow space-y-4">
           <div className="flex items-center justify-between">
             <div>
@@ -147,11 +131,11 @@ export default function Bills() {
               <span className="font-semibold text-foreground">{formatLitres(pendingBill.consumption)}</span>
             </div>
             <div className="flex justify-between text-muted-foreground">
-              <span>Water</span>
+              <span>Water charge</span>
               <span>{formatCurrency(pendingBill.amount)}</span>
             </div>
             <div className="flex justify-between text-muted-foreground">
-              <span>Tax</span>
+              <span>Tax (5% VAT)</span>
               <span>{formatCurrency(pendingBill.tax)}</span>
             </div>
             <div className="pt-2 border-t border-border flex justify-between font-black text-base text-foreground">
@@ -177,9 +161,14 @@ export default function Bills() {
             </Button>
           </div>
         </Card>
+      ) : (
+        <div className="rounded-[24px] border border-dashed border-border/80 p-6 text-center text-xs text-muted-foreground">
+          <Receipt className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+          No pending utility bills.
+        </div>
       )}
 
-      {/* 3. Payment History List Rows (Section 28) */}
+      {/* 3. Payment History List Rows */}
       <div className="space-y-3 pt-2">
         <h3 className="text-sm font-bold text-foreground px-1">Payment history</h3>
 

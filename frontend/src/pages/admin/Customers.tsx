@@ -24,11 +24,9 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { EmptyState } from '@/components/empty/EmptyState'
 import { CustomerFormDialog } from '@/components/forms/CustomerFormDialog'
-import { MeterStatusBadge } from '@/components/admin/MeterStatusBadge'
 import { useCustomers } from '@/hooks/useAdminCustomers'
 import { useSendValveCommand } from '@/hooks/useValveCommands'
 import { useRealtimeInvalidate } from '@/hooks/useRealtimeInvalidate'
-import { formatCurrency, formatLitres } from '@/lib/format'
 import type { CustomerRow } from '@/services/adminCustomers'
 
 export default function Customers() {
@@ -137,7 +135,7 @@ export default function Customers() {
         </div>
       </div>
 
-      {/* 3. Customer Data Table (Section 37) */}
+      {/* 3. Customer Data Table */}
       {isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 5 }).map((_, i) => (
@@ -157,89 +155,75 @@ export default function Customers() {
               <TableRow className="text-xs">
                 <TableHead>Customer</TableHead>
                 <TableHead>Meter Serial</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Today's Usage</TableHead>
-                <TableHead>Outstanding Bill</TableHead>
-                <TableHead>Current Token</TableHead>
+                <TableHead>Account Status</TableHead>
+                <TableHead>Phone</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((c) => {
-                const hasMeter = !!c.meter_id
-                const todayUsage = hasMeter ? 142 : 0
-                const outstanding = 125400
-                const currentToken = hasMeter ? '4829 1736 2041' : 'None'
+              {filtered.map((c) => (
+                <TableRow
+                  key={c.id}
+                  className="text-xs hover:bg-secondary/40 cursor-pointer"
+                  onClick={() => {
+                    setSelectedCustomer(c)
+                    setDetailTab('overview')
+                  }}
+                >
+                  <TableCell>
+                    <div className="font-bold text-foreground">
+                      {c.first_name} {c.last_name}
+                    </div>
+                    <span className="text-[10px] font-mono text-muted-foreground">
+                      {c.customer_number} · {c.email}
+                    </span>
+                  </TableCell>
 
-                return (
-                  <TableRow
-                    key={c.id}
-                    className="text-xs hover:bg-secondary/40 cursor-pointer"
-                    onClick={() => {
-                      setSelectedCustomer(c)
-                      setDetailTab('overview')
-                    }}
-                  >
-                    <TableCell>
-                      <div className="font-bold text-foreground">
-                        {c.first_name} {c.last_name}
-                      </div>
-                      <span className="text-[10px] font-mono text-muted-foreground">
-                        {c.customer_number} · {c.phone || c.email}
+                  <TableCell>
+                    {c.meter_serial ? (
+                      <span className="font-mono font-bold text-foreground">
+                        {c.meter_serial}
                       </span>
-                    </TableCell>
+                    ) : (
+                      <span className="text-muted-foreground italic text-[11px]">Unassigned</span>
+                    )}
+                  </TableCell>
 
-                    <TableCell>
-                      {c.meter_serial ? (
-                        <span className="font-mono font-bold text-foreground">
-                          {c.meter_serial}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground italic text-[11px]">Unassigned</span>
-                      )}
-                    </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={c.account_status === 'active' ? 'default' : 'secondary'}
+                      className="text-[10px] capitalize"
+                    >
+                      {c.account_status}
+                    </Badge>
+                  </TableCell>
 
-                    <TableCell>
-                      <MeterStatusBadge status={hasMeter ? 'online' : 'offline'} />
-                    </TableCell>
+                  <TableCell className="text-muted-foreground font-mono">
+                    {c.phone || '-'}
+                  </TableCell>
 
-                    <TableCell className="font-semibold text-foreground">
-                      {formatLitres(todayUsage)}
-                    </TableCell>
-
-                    <TableCell className="font-bold text-foreground">
-                      {formatCurrency(outstanding)}
-                    </TableCell>
-
-                    <TableCell>
-                      <span className="font-mono text-[11px] text-sky-600 dark:text-sky-400 font-bold">
-                        {currentToken}
-                      </span>
-                    </TableCell>
-
-                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedCustomer(c)
-                          setDetailTab('overview')
-                        }}
-                        className="h-7 px-2 text-[11px] rounded-lg"
-                      >
-                        <Eye className="h-3 w-3 mr-1" />
-                        Details
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                )
-              })}
+                  <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedCustomer(c)
+                        setDetailTab('overview')
+                      }}
+                      className="h-7 px-2 text-[11px] rounded-lg"
+                    >
+                      <Eye className="h-3 w-3 mr-1" />
+                      Details
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
         </div>
       )}
 
-      {/* 4. Customer Detail Modal with Tabs (Section 38) */}
+      {/* 4. Customer Detail Modal with Tabs */}
       {selectedCustomer && (
         <Dialog open={!!selectedCustomer} onOpenChange={() => setSelectedCustomer(null)}>
           <DialogContent className="max-w-2xl rounded-[28px] p-6 space-y-4">
@@ -254,7 +238,7 @@ export default function Customers() {
                   </DialogDescription>
                 </div>
                 <Badge variant={selectedCustomer.meter_id ? 'default' : 'secondary'} className="text-[10px]">
-                  {selectedCustomer.meter_id ? 'Active' : 'Unmetered'}
+                  {selectedCustomer.meter_id ? 'Meter Assigned' : 'Unmetered'}
                 </Badge>
               </div>
             </DialogHeader>
@@ -282,8 +266,8 @@ export default function Customers() {
                     <p className="font-bold text-emerald-600 dark:text-emerald-400 mt-0.5 capitalize">{selectedCustomer.account_status}</p>
                   </div>
                   <div className="rounded-xl bg-secondary/30 p-3">
-                    <span className="text-muted-foreground block text-[10px] uppercase font-semibold">Current Balance</span>
-                    <p className="font-bold text-sm text-foreground mt-0.5">{formatCurrency(125400)}</p>
+                    <span className="text-muted-foreground block text-[10px] uppercase font-semibold">Customer ID</span>
+                    <p className="font-mono font-bold text-sm text-foreground mt-0.5">{selectedCustomer.customer_number}</p>
                   </div>
                 </div>
 
@@ -319,66 +303,36 @@ export default function Customers() {
 
               {/* Tab 2: Usage */}
               <TabsContent value="usage" className="space-y-3 pt-3 text-xs">
-                <div className="rounded-xl bg-secondary/30 p-4 space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Today's Consumption:</span>
-                    <span className="font-bold text-foreground">142 L</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">This Week:</span>
-                    <span className="font-bold text-foreground">1,250 L</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">This Month (August):</span>
-                    <span className="font-bold text-foreground">4,850 L</span>
-                  </div>
+                <div className="rounded-xl border border-dashed border-border/80 p-6 text-center text-muted-foreground">
+                  View usage statistics and live flow in Analytics or Water Center.
                 </div>
               </TabsContent>
 
               {/* Tab 3: Tokens */}
               <TabsContent value="tokens" className="space-y-2 pt-3 text-xs">
-                <div className="rounded-xl border border-border/80 p-3 flex items-center justify-between">
-                  <div>
-                    <span className="font-mono font-bold text-foreground">4829 1736 2041</span>
-                    <span className="block text-[11px] text-muted-foreground">5,000 L · TSh 525,000</span>
-                  </div>
-                  <Badge variant="default" className="text-[10px]">Active</Badge>
+                <div className="rounded-xl border border-dashed border-border/80 p-6 text-center text-muted-foreground">
+                  Customer prepaid token allocations are tracked under Tokens menu.
                 </div>
               </TabsContent>
 
               {/* Tab 4: Sessions */}
               <TabsContent value="sessions" className="space-y-2 pt-3 text-xs">
-                <div className="rounded-xl border border-border/80 p-3 space-y-1">
-                  <div className="flex justify-between font-bold">
-                    <span>Live Flow Velocity</span>
-                    <span className="text-sky-600">8.4 L/min</span>
-                  </div>
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Consumed in session</span>
-                    <span>142 L / 5,000 L</span>
-                  </div>
+                <div className="rounded-xl border border-dashed border-border/80 p-6 text-center text-muted-foreground">
+                  Active and completed water sessions appear in Sessions menu.
                 </div>
               </TabsContent>
 
               {/* Tab 5: Bills */}
               <TabsContent value="bills" className="space-y-2 pt-3 text-xs">
-                <div className="rounded-xl border border-border/80 p-3 flex justify-between items-center">
-                  <div>
-                    <span className="font-bold">August 2026</span>
-                    <span className="block text-muted-foreground">1,254 L consumed</span>
-                  </div>
-                  <span className="font-bold text-foreground">{formatCurrency(125400)}</span>
+                <div className="rounded-xl border border-dashed border-border/80 p-6 text-center text-muted-foreground">
+                  Monthly postpaid utility statements are generated under Billing menu.
                 </div>
               </TabsContent>
 
               {/* Tab 6: Payments */}
               <TabsContent value="payments" className="space-y-2 pt-3 text-xs">
-                <div className="rounded-xl border border-border/80 p-3 flex justify-between items-center">
-                  <div>
-                    <span className="font-bold">M-Pesa · 26 Aug 2026</span>
-                    <span className="block text-muted-foreground">Ref: MPX-992812</span>
-                  </div>
-                  <span className="font-bold text-emerald-600">{formatCurrency(125400)}</span>
+                <div className="rounded-xl border border-dashed border-border/80 p-6 text-center text-muted-foreground">
+                  Payment records are tracked under Payments menu.
                 </div>
               </TabsContent>
 
@@ -386,7 +340,7 @@ export default function Customers() {
               <TabsContent value="alerts" className="space-y-2 pt-3 text-xs">
                 <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-3 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/20 dark:text-emerald-300">
                   <p className="font-bold">No active leak or hardware alerts.</p>
-                  <p className="text-[11px] mt-0.5">Continuous telemetry reporting normal pulse rates.</p>
+                  <p className="text-[11px] mt-0.5">Continuous telemetry monitoring enabled.</p>
                 </div>
               </TabsContent>
             </Tabs>

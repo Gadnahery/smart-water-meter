@@ -33,19 +33,19 @@ export default function Dashboard() {
   useRealtimeInvalidate('water_sessions', [['all-active-sessions']])
   useRealtimeInvalidate('water_tokens', [['all-tokens']])
 
-  // Calculated metrics
-  const activeSessionsCount = activeSessions.length || 12
-  const todayLitres = todayConsumption > 0 ? todayConsumption : 18450
-  const activeTokensCount = tokens.filter((t) => t.status === 'active').length || 12
+  // Real Database Metrics
+  const activeSessionsCount = activeSessions.length
+  const todayLitres = todayConsumption || 0
+  const activeTokensCount = tokens.filter((t) => t.status === 'active').length
   const tokenRevenue = useMemo(() => {
-    return tokens.reduce((sum, t) => sum + (t.total || 0), 0) || 42500000
+    return tokens.reduce((sum, t) => sum + (t.total || 0), 0)
   }, [tokens])
 
-  const totalMeters = counts?.totalMeters || 1284
-  const onlineMeters = counts?.activeMeters || 1142
-  const offlineMeters = counts?.offlineMeters || 94
-  const lowBatteryCount = 18
-  const weakSignalCount = 24
+  const totalMeters = counts?.totalMeters ?? 0
+  const onlineMeters = counts?.activeMeters ?? 0
+  const offlineMeters = counts?.offlineMeters ?? Math.max(0, totalMeters - onlineMeters)
+  const lowBatteryCount = 0
+  const weakSignalCount = 0
 
   async function handleStopSession(sessionId: string, meterId?: string) {
     await stopSession.mutateAsync({ sessionId, meterId })
@@ -68,7 +68,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 pb-12">
-      {/* 1. Header (Section 35 & 70) */}
+      {/* 1. Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
@@ -85,45 +85,42 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* 2. Top Metrics (Section 35 & 70) */}
+      {/* 2. Top Metrics (Real Data) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
         <AdminMetricCard
           label="Active Sessions"
           value={activeSessionsCount}
-          sublabel="Water flowing now"
-          trend={{ value: 14, label: 'vs yesterday' }}
+          sublabel={activeSessionsCount > 0 ? 'Water flowing now' : 'No flowing sessions'}
           icon={<Droplets className="h-5 w-5 text-sky-500" />}
         />
         <AdminMetricCard
           label="Today's Consumption"
           value={formatLitres(todayLitres)}
           sublabel="Validated pulse volume"
-          trend={{ value: -3, label: 'vs last week' }}
           icon={<Activity className="h-5 w-5 text-cyan-500" />}
         />
         <AdminMetricCard
           label="Water Tokens"
           value={activeTokensCount}
-          sublabel={`Allocated: ${formatCurrency(tokenRevenue)}`}
-          trend={{ value: 8, label: 'sales growth' }}
+          sublabel={`Revenue: ${formatCurrency(tokenRevenue)}`}
           icon={<KeyRound className="h-5 w-5 text-purple-500" />}
         />
         <AdminMetricCard
           label="Online Meters"
           value={`${onlineMeters} / ${totalMeters}`}
-          sublabel={`${Math.round((onlineMeters / totalMeters) * 100)}% fleet operational`}
+          sublabel={totalMeters > 0 ? `${Math.round((onlineMeters / totalMeters) * 100)}% fleet operational` : 'No meters registered'}
           icon={<Gauge className="h-5 w-5 text-emerald-500" />}
         />
       </div>
 
-      {/* 3. Live Water Sessions (Section 35, 36, 70) */}
+      {/* 3. Live Water Sessions */}
       <Card className="rounded-[24px] border border-sky-200/80 dark:border-sky-900 bg-card overflow-hidden card-soft-shadow">
         <CardHeader className="border-b border-sky-100 dark:border-sky-900/50 bg-sky-500/5 py-4 px-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-sky-500" />
+                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${activeSessions.length > 0 ? 'bg-sky-400 opacity-75' : 'bg-slate-400 opacity-20'}`} />
+                <span className={`relative inline-flex rounded-full h-3 w-3 ${activeSessions.length > 0 ? 'bg-sky-500' : 'bg-slate-400'}`} />
               </span>
               <CardTitle className="text-base font-bold text-foreground">
                 Live Water Sessions
@@ -143,7 +140,7 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
-      {/* 4. Fleet Telemetry & Device Health (Section 35 & 36) */}
+      {/* 4. Fleet Telemetry & Device Health */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Device Health Breakdown */}
         <div className="lg:col-span-1">
@@ -156,13 +153,13 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* System Consumption Graph (Section 35 & 70) */}
+        {/* System Consumption Graph */}
         <div className="lg:col-span-2">
           <ConsumptionOverview data={series} />
         </div>
       </div>
 
-      {/* 5. Recent Alerts & System Activity (Section 35) */}
+      {/* 5. Recent Alerts & System Activity */}
       <Card className="rounded-[24px] border border-border/80 bg-card p-6 card-soft-shadow">
         <CardHeader className="p-0 pb-4 flex flex-row items-center justify-between">
           <div className="flex items-center gap-2">

@@ -19,7 +19,7 @@ interface WaterStatusCardProps {
 
 export function WaterStatusCard({
   activeToken,
-  flowRate = 8.4,
+  flowRate = 0,
   isFlowing = false,
   onGetWater,
   onEnterToken,
@@ -27,7 +27,7 @@ export function WaterStatusCard({
 }: WaterStatusCardProps) {
   const hasActiveToken = !!activeToken
   const remainingLitres = activeToken?.remaining_litres ?? 0
-  const allocatedLitres = activeToken?.allocated_litres ?? 5000
+  const allocatedLitres = activeToken?.allocated_litres ?? 0
   const pctRemaining = allocatedLitres > 0 ? (remainingLitres / allocatedLitres) * 100 : 0
 
   return (
@@ -44,9 +44,9 @@ export function WaterStatusCard({
                 strokeWidth={18}
                 unit="L"
                 label="Water remaining"
-                sublabel={isFlowing ? `● Water flowing ${flowRate ?? 8.4} L/min` : 'Valve open'}
+                sublabel={isFlowing ? `● Water flowing ${(flowRate ?? 0).toFixed(1)} L/min` : 'Valve open'}
                 isFlowing={isFlowing}
-                flowRate={flowRate ?? 8.4}
+                flowRate={flowRate ?? 0}
                 color="water"
               />
             ) : (

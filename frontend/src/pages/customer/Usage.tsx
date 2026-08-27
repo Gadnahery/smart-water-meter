@@ -28,10 +28,10 @@ export default function Usage() {
   const stats = useMemo(() => {
     if (daily.length === 0) {
       return {
-        total: 1254,
-        average: 142,
-        highest: 215,
-        lowest: 92,
+        total: 0,
+        average: 0,
+        highest: 0,
+        lowest: 0,
       }
     }
     const values = daily.map((d) => Number(d.consumption || 0))
@@ -48,7 +48,7 @@ export default function Usage() {
     if (currentMonth && previousMonth && previousMonth.total_consumption > 0) {
       return Math.round(((currentMonth.total_consumption - previousMonth.total_consumption) / previousMonth.total_consumption) * 100)
     }
-    return -12
+    return 0
   }, [currentMonth, previousMonth])
 
   function exportCsv() {

@@ -34,8 +34,9 @@ import { MeterStatusBadge } from '@/components/admin/MeterStatusBadge'
 import { useMeters } from '@/hooks/useAdminMeters'
 import { useSendValveCommand } from '@/hooks/useValveCommands'
 import { formatLitres } from '@/lib/format'
+import { isMeterOnline } from '@/lib/meterStatus'
 import type { MeterWithCustomer } from '@/services/adminMeters'
-import type { ValveCommandType } from '@/types'
+import type { MeterStatus, ValveCommandType } from '@/types'
 
 export default function Meters() {
   const { data: meters = [], isLoading } = useMeters()
@@ -48,18 +49,33 @@ export default function Meters() {
   const [maintenanceMeter, setMaintenanceMeter] = useState<MeterWithCustomer | null>(null)
   const [logsMeter, setLogsMeter] = useState<MeterWithCustomer | null>(null)
 
+  // Real Fleet Metrics (Calculated strictly from actual meter telemetry)
   const counts = useMemo(() => {
-    const total = meters.length > 0 ? meters.length : 1284
-    const online = meters.filter((m) => m.status === 'online').length || 1142
-    const offline = meters.filter((m) => m.status === 'offline').length || 94
-    const maintenance = meters.filter((m) => m.status === 'maintenance').length || 31
-    const fault = meters.filter((m) => m.status === 'fault').length || 17
-    return { total, online, offline, maintenance, fault }
+    const total = meters.length
+    const online = meters.filter((m) => isMeterOnline(m.last_seen)).length
+    const maintenance = meters.filter((m) => m.status === 'maintenance').length
+    const fault = meters.filter((m) => m.status === 'fault').length
+    const offline = total - online - maintenance - fault
+    return {
+      total,
+      online,
+      offline: Math.max(0, offline),
+      maintenance,
+      fault,
+    }
   }, [meters])
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     return meters.filter((m) => {
+      const isOnline = isMeterOnline(m.last_seen)
+      const effectiveStatus: MeterStatus =
+        m.status === 'maintenance' || m.status === 'fault' || m.status === 'disabled'
+          ? m.status
+          : isOnline
+          ? 'online'
+          : 'offline'
+
       const matchesSearch =
         !q ||
         [m.meter_serial, m.customer_number ?? '', m.customer_name ?? '']
@@ -67,7 +83,7 @@ export default function Meters() {
           .toLowerCase()
           .includes(q)
 
-      const matchesStatus = filterStatus === 'all' || m.status === filterStatus
+      const matchesStatus = filterStatus === 'all' || effectiveStatus === filterStatus
       return matchesSearch && matchesStatus
     })
   }, [meters, search, filterStatus])
@@ -119,7 +135,7 @@ export default function Meters() {
         </div>
       </div>
 
-      {/* 2. Top Metrics (Section 39: 1,284 total, 1,142 Online, 94 Offline, 31 Maintenance, 17 Fault) */}
+      {/* 2. Top Metrics (Real counts) */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <Card className="rounded-[18px] border border-border/80 bg-card p-4 card-soft-shadow">
           <span className="text-[10px] uppercase font-semibold text-muted-foreground">Smart meters</span>
@@ -188,7 +204,7 @@ export default function Meters() {
         </div>
       </div>
 
-      {/* 4. Table (Section 39) */}
+      {/* 4. Table (Real Data) */}
       {isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 5 }).map((_, i) => (
@@ -214,7 +230,7 @@ export default function Meters() {
                 <TableHead>Customer</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Flow</TableHead>
-                <TableHead>Today's Usage</TableHead>
+                <TableHead>Total Usage</TableHead>
                 <TableHead>Valve</TableHead>
                 <TableHead>Battery</TableHead>
                 <TableHead>Signal</TableHead>
@@ -224,16 +240,23 @@ export default function Meters() {
             </TableHeader>
             <TableBody>
               {filtered.map((m) => {
-                const isOnline = m.status === 'online'
-                const flowRate = isOnline ? 8.4 : 0
-                const todayL = 142
-                const isValveOpen = isOnline
+                const isOnline = isMeterOnline(m.last_seen)
+                const effectiveStatus: MeterStatus =
+                  m.status === 'maintenance' || m.status === 'fault' || m.status === 'disabled'
+                    ? m.status
+                    : isOnline
+                    ? 'online'
+                    : 'offline'
+
+                const flowRate = isOnline && m.latest_flow_rate != null ? m.latest_flow_rate : 0
+                const usageLitres = m.latest_water_usage != null ? m.latest_water_usage : 0
+                const isValveOpen = isOnline && m.status !== 'disabled'
 
                 return (
                   <TableRow key={m.id} className="text-xs hover:bg-secondary/40">
                     <TableCell>
                       <span className="font-mono font-bold text-foreground">{m.meter_serial}</span>
-                      <span className="text-[10px] text-muted-foreground block">{m.firmware_version ? `v${m.firmware_version}` : 'SafeWater ESP32-S3'}</span>
+                      <span className="text-[10px] text-muted-foreground block">{m.firmware_version ? `v${m.firmware_version}` : 'SafeWater ESP32'}</span>
                     </TableCell>
 
                     <TableCell>
@@ -252,14 +275,14 @@ export default function Meters() {
                     </TableCell>
 
                     <TableCell>
-                      <MeterStatusBadge status={m.status} />
+                      <MeterStatusBadge status={effectiveStatus} />
                     </TableCell>
 
                     <TableCell>
                       {flowRate > 0 ? (
                         <span className="font-bold text-sky-600 dark:text-sky-400 flex items-center gap-1">
                           <Droplets className="h-3 w-3" />
-                          {flowRate} L/min
+                          {flowRate.toFixed(1)} L/min
                         </span>
                       ) : (
                         <span className="text-muted-foreground">0.0 L/min</span>
@@ -267,7 +290,7 @@ export default function Meters() {
                     </TableCell>
 
                     <TableCell className="font-semibold text-foreground">
-                      {formatLitres(todayL)}
+                      {formatLitres(usageLitres)}
                     </TableCell>
 
                     <TableCell>
@@ -285,20 +308,20 @@ export default function Meters() {
 
                     <TableCell>
                       <div className="flex items-center gap-1 text-muted-foreground">
-                        <BatteryMedium className="h-3.5 w-3.5 text-emerald-500" />
-                        <span>{m.battery_level != null ? `${m.battery_level}%` : '85%'}</span>
+                        <BatteryMedium className={`h-3.5 w-3.5 ${isOnline ? 'text-emerald-500' : 'text-muted-foreground'}`} />
+                        <span>{m.battery_level != null ? `${m.battery_level}%` : (isOnline ? '100%' : '-')}</span>
                       </div>
                     </TableCell>
 
                     <TableCell>
                       <div className="flex items-center gap-1 text-muted-foreground font-mono text-[11px]">
-                        <Radio className="h-3 w-3 text-sky-500" />
-                        <span>{m.wifi_signal != null ? `${m.wifi_signal} dBm` : '-64 dBm'}</span>
+                        <Radio className={`h-3 w-3 ${isOnline ? 'text-sky-500' : 'text-muted-foreground'}`} />
+                        <span>{m.wifi_signal != null ? `${m.wifi_signal} dBm` : (isOnline ? 'Connected' : '-')}</span>
                       </div>
                     </TableCell>
 
                     <TableCell className="text-muted-foreground">
-                      {m.last_seen ? formatDistanceToNow(new Date(m.last_seen), { addSuffix: true }) : 'Active now'}
+                      {m.last_seen ? formatDistanceToNow(new Date(m.last_seen), { addSuffix: true }) : 'Never'}
                     </TableCell>
 
                     <TableCell className="text-right">
