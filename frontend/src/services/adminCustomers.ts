@@ -13,6 +13,7 @@ export interface CustomerRow {
   last_name: string
   email: string
   phone: string | null
+  meter_id: string | null
   meter_serial: string | null
 }
 
@@ -20,7 +21,7 @@ export async function fetchCustomers(): Promise<CustomerRow[]> {
   const { data, error } = await supabase
     .from('customers')
     .select(
-      'id, profile_id, customer_number, national_id, address, account_status, created_at, profiles(first_name, last_name, email, phone), smart_meters!smart_meters_customer_id_fkey(meter_serial)',
+      'id, profile_id, customer_number, national_id, address, account_status, created_at, profiles(first_name, last_name, email, phone), smart_meters!smart_meters_customer_id_fkey(id, meter_serial)',
     )
     .order('created_at', { ascending: false })
 
@@ -33,7 +34,7 @@ export async function fetchCustomers(): Promise<CustomerRow[]> {
       email: string
       phone: string | null
     } | null
-    const meters = row.smart_meters as unknown as { meter_serial: string }[] | null
+    const meters = row.smart_meters as unknown as { id: string; meter_serial: string }[] | null
 
     return {
       id: row.id,
@@ -47,6 +48,7 @@ export async function fetchCustomers(): Promise<CustomerRow[]> {
       last_name: profile?.last_name ?? '',
       email: profile?.email ?? '',
       phone: profile?.phone ?? null,
+      meter_id: meters?.[0]?.id ?? null,
       meter_serial: meters?.[0]?.meter_serial ?? null,
     }
   })

@@ -9,13 +9,16 @@ import Register from '@/pages/auth/Register'
 import ForgotPassword from '@/pages/auth/ForgotPassword'
 import ResetPassword from '@/pages/auth/ResetPassword'
 import Home from '@/pages/customer/Home'
-import Usage from '@/pages/customer/Usage'
+import Water from '@/pages/customer/Water'
 import Bills from '@/pages/customer/Bills'
-import Notifications from '@/pages/customer/Notifications'
+import Activity from '@/pages/customer/Activity'
 import Profile from '@/pages/customer/Profile'
+import Usage from '@/pages/customer/Usage'
 import Dashboard from '@/pages/admin/Dashboard'
 import AdminCustomers from '@/pages/admin/Customers'
 import AdminMeters from '@/pages/admin/Meters'
+import AdminSessions from '@/pages/admin/Sessions'
+import AdminTokens from '@/pages/admin/Tokens'
 import AdminConsumption from '@/pages/admin/Consumption'
 import AdminBilling from '@/pages/admin/Billing'
 import AdminPayments from '@/pages/admin/Payments'
@@ -64,6 +67,7 @@ export function AppRouter() {
         }
       />
 
+      {/* Customer Application */}
       <Route
         element={
           <ProtectedRoute>
@@ -72,12 +76,16 @@ export function AppRouter() {
         }
       >
         <Route path="/" element={<Home />} />
-        <Route path="/usage" element={<Usage />} />
+        <Route path="/water" element={<Water />} />
         <Route path="/bills" element={<Bills />} />
-        <Route path="/notifications" element={<Notifications />} />
+        <Route path="/activity" element={<Activity />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/usage" element={<Usage />} />
+        {/* Backward compatible aliases */}
+        <Route path="/notifications" element={<Navigate to="/activity" replace />} />
       </Route>
 
+      {/* Admin Operations Portal */}
       <Route
         element={
           <AdminRoute>
@@ -88,6 +96,8 @@ export function AppRouter() {
         <Route path="/admin" element={<Dashboard />} />
         <Route path="/admin/customers" element={<AdminCustomers />} />
         <Route path="/admin/meters" element={<AdminMeters />} />
+        <Route path="/admin/sessions" element={<AdminSessions />} />
+        <Route path="/admin/tokens" element={<AdminTokens />} />
         <Route path="/admin/consumption" element={<AdminConsumption />} />
         <Route path="/admin/billing" element={<AdminBilling />} />
         <Route path="/admin/payments" element={<AdminPayments />} />
